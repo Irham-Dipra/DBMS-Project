@@ -21,7 +21,6 @@ import React, { useEffect, useState, useRef } from 'react';
     const [showShelfDropdown, setShowShelfDropdown] = useState(false);
     const [loggedIn, setLoggedIn] = useState(false);
     const [userId, setUserId] = useState(null);
-    const [showFilters, setShowFilters] = useState(false);
 
     const [reviewTitle, setReviewTitle] = useState('');
     const [reviewBody, setReviewBody] = useState('');
@@ -130,9 +129,13 @@ import React, { useEffect, useState, useRef } from 'react';
       try {
         const currentDateTime = new Date().toISOString();
 
+        const token = localStorage.getItem('token');
         const res = await fetch('http://localhost:3000/reviews', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({
             user_id: userId,
             book_id: parseInt(id),
@@ -281,9 +284,6 @@ import React, { useEffect, useState, useRef } from 'react';
       navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
     };
 
-    const handleFilterToggle = () => {
-      setShowFilters(!showFilters);
-    };
 
     const getShelfDisplayName = (shelf) => {
       switch (shelf) {
@@ -308,8 +308,7 @@ import React, { useEffect, useState, useRef } from 'react';
           <Navbar 
             loggedIn={loggedIn} 
             onSearch={handleSearch}
-            onFilterToggle={handleFilterToggle}
-            hasActiveFilters={showFilters}
+            showFilters={false}
           />
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -325,8 +324,7 @@ import React, { useEffect, useState, useRef } from 'react';
           <Navbar 
             loggedIn={loggedIn} 
             onSearch={handleSearch}
-            onFilterToggle={handleFilterToggle}
-            hasActiveFilters={showFilters}
+            showFilters={false}
           />
           <div className="error-container">
             <p>Error: {error}</p>
@@ -341,8 +339,7 @@ import React, { useEffect, useState, useRef } from 'react';
           <Navbar 
             loggedIn={loggedIn} 
             onSearch={handleSearch}
-            onFilterToggle={handleFilterToggle}
-            hasActiveFilters={showFilters}
+            showFilters={false}
           />
           <div className="error-container">
             <p>No book found.</p>
@@ -378,8 +375,7 @@ import React, { useEffect, useState, useRef } from 'react';
         <Navbar 
           loggedIn={loggedIn} 
           onSearch={handleSearch}
-          onFilterToggle={handleFilterToggle}
-          hasActiveFilters={showFilters}
+          showFilters={false}
         />
 
         <div className="book-page-container">

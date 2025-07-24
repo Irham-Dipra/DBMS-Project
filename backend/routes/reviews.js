@@ -2,10 +2,11 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
+const { checkUserActivation, optionalUserActivationCheck } = require('../middleware/userActivationCheck');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
 
-// Middleware to verify JWT token
+// Middleware to verify JWT token (kept for backwards compatibility where activation check isn't needed)
 const verifyToken = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   
@@ -28,8 +29,8 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-// POST /reviews
-router.post('/', async (req, res) => {
+// POST /reviews - Create a new review (requires active user)
+router.post('/', checkUserActivation, async (req, res) => {
   const { user_id, book_id, title, body, rating } = req.body;
 
   if (!user_id || !book_id || !title || !body || !rating) {
@@ -280,7 +281,8 @@ router.get('/all', async (req, res) => {
 });
 
 // POST /reviews/:reviewId/vote - Vote on a review
-router.post('/:reviewId/vote', async (req, res) => {
+// POST /reviews/:reviewId/vote - Vote on a review (requires active user)
+router.post('/:reviewId/vote', checkUserActivation, async (req, res) => {
   const { reviewId } = req.params;
   const { vote_type } = req.body;
   
@@ -368,7 +370,8 @@ router.post('/:reviewId/vote', async (req, res) => {
 });
 
 // POST /reviews/:reviewId/comment - Add a comment to a review
-router.post('/:reviewId/comment', async (req, res) => {
+// POST /reviews/:reviewId/comment - Add comment to review (requires active user)
+router.post('/:reviewId/comment', checkUserActivation, async (req, res) => {
   const { reviewId } = req.params;
   const { comment, parent_comment_id } = req.body;
   
@@ -501,7 +504,8 @@ router.get('/comments/:commentId/replies', async (req, res) => {
 });
 
 // POST /reviews/comments/:commentId/vote - Vote on a comment
-router.post('/comments/:commentId/vote', async (req, res) => {
+// POST /reviews/comments/:commentId/vote - Vote on comment (requires active user)
+router.post('/comments/:commentId/vote', checkUserActivation, async (req, res) => {
   const { commentId } = req.params;
   const { vote_type } = req.body;
   

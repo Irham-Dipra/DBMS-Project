@@ -1,0 +1,45 @@
+/* Container for filter bar - positioned right after navbar */
+.filter-container {
+  width: 100%;
+  z-index: 999;
+}
+
+/* Search results specific styles */
+.search-results-header {
+  padding: 1rem 2rem;
+}
+
+.active-filters {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.active-filters h3 {
+  color: white;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filter-tag {
+  background: rgba(66, 153, 225, 0.8);
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.error-message, .no-results {
+  padding: 1rem 2rem;
+  color: white;
+  text-align: center;
+}

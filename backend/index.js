@@ -20,6 +20,10 @@ const addBookRoutes = require('./routes/addBook');
 const reviewRoutes = require('./routes/reviews');
 const userBooksRoutes = require('./routes/userBooks');
 const authorRoutes = require('./routes/authors');
+const analyticsRoutes = require('./routes/analytics');
+const moderatorBooksRoutes = require('./routes/moderatorBooks');
+const userManagementRoutes = require('./routes/userManagement');
+const reactivationScheduler = require('./utils/scheduler');
 
 
 
@@ -33,6 +37,9 @@ app.use('/addBook', addBookRoutes);
 app.use('/reviews', reviewRoutes);
 app.use('/myBooks', userBooksRoutes);
 app.use('/authors', authorRoutes);
+app.use('/analytics', analyticsRoutes);
+app.use('/moderator', moderatorBooksRoutes);
+app.use('/moderator', userManagementRoutes);
 
 app.get('/books/:id', async (req, res) => {
   const { id } = req.params; 
@@ -128,6 +135,9 @@ app.get('/books/:id', async (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running at port ${PORT}`);
+  
+  // Start the user reactivation scheduler
+  reactivationScheduler.start();
 });
 
 

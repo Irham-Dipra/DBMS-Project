@@ -143,6 +143,13 @@
   }
 }
 
+/* Container for filter bar dropdown */
+.navbar-filter-container {
+  width: 100%;
+  position: relative;
+  z-index: 1000;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .navbar {

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import BookCard from '../components/BookCard';
-import FilterBar from '../components/FilterBar';
 import './Author.css';
 
 function Author() {
@@ -13,16 +12,6 @@ function Author() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [loggedIn, setLoggedIn] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    language: [],
-    genre: [],
-    author: [],
-    publisher: [],
-    country: [],
-    pubDateRange: [1800, 2025],
-    ratingRange: [0, 5]
-  });
 
   useEffect(() => {
     fetchAuthorData();
@@ -93,25 +82,6 @@ function Author() {
     navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
   };
 
-  const handleFilterToggle = () => {
-    setShowFilters(!showFilters);
-  };
-
-  const handleFilterChange = (newFilters) => {
-    setFilters(newFilters);
-  };
-
-  const hasActiveFilters = () => {
-    return (
-      filters.language.length > 0 ||
-      filters.genre.length > 0 ||
-      filters.author.length > 0 ||
-      filters.publisher.length > 0 ||
-      filters.country.length > 0 ||
-      (filters.pubDateRange[0] !== 1800 || filters.pubDateRange[1] !== 2025) ||
-      (filters.ratingRange[0] !== 0 || filters.ratingRange[1] !== 5)
-    );
-  };
 
   if (loading) {
     return (
@@ -119,8 +89,6 @@ function Author() {
         <Navbar 
           loggedIn={loggedIn} 
           onSearch={handleSearch}
-          onFilterToggle={handleFilterToggle}
-          hasActiveFilters={hasActiveFilters()}
         />
         <div className="loading-spinner">Loading author information...</div>
       </div>
@@ -133,8 +101,6 @@ function Author() {
         <Navbar 
           loggedIn={loggedIn} 
           onSearch={handleSearch}
-          onFilterToggle={handleFilterToggle}
-          hasActiveFilters={hasActiveFilters()}
         />
         <div className="error-message">
           <h2>Error</h2>
@@ -150,21 +116,8 @@ function Author() {
       <Navbar 
         loggedIn={loggedIn} 
         onSearch={handleSearch}
-        onFilterToggle={handleFilterToggle}
-        hasActiveFilters={hasActiveFilters()}
       />
       
-      {/* Filter popup panel */}
-      <div className="filter-container">
-        {showFilters && (
-          <FilterBar
-            filters={filters}
-            setFilters={setFilters}
-            isOpen={showFilters}
-            setIsOpen={setShowFilters}
-          />
-        )}
-      </div>
       
       <div className="author-content">
         <div className="author-header">

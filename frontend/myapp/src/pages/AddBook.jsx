@@ -1,8 +1,10 @@
 // frontend/src/pages/AddBook.jsx
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './AddBook.css';
 
 const AddBook = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [genres, setGenres] = useState([]);
   const [languages, setLanguages] = useState([]);
@@ -28,7 +30,20 @@ const AddBook = () => {
     pdf_url: ''
   });
 
-  const moderatorId = 1; // Replace with actual logged in moderator id
+  const [moderatorId, setModeratorId] = useState(null);
+
+  // Get moderator ID from token
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setModeratorId(payload.userId);
+      } catch (error) {
+        console.error('Error parsing token:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     fetch('http://localhost:3000/addBook/genres').then(res => res.json()).then(setGenres).catch(console.error);
@@ -99,8 +114,8 @@ const AddBook = () => {
       });
       const data = await res.json();
       if (data.success) {
-        alert('Book added with ID: ' + data.book_id);
-        setStep(1);
+        alert('Book added successfully with ID: ' + data.book_id);
+        navigate('/moderator-dashboard');
       } else {
         alert('Error: ' + data.message);
       }
@@ -390,7 +405,12 @@ const AddBook = () => {
 
   return (
     <div className="add-book-page">
-      <h1>Add Book</h1>
+      <div className="add-book-header">
+        <button className="back-btn" onClick={() => navigate('/moderator-dashboard')}>
+          ← Back to Dashboard
+        </button>
+        <h1>📚 Add Book</h1>
+      </div>
       <StepIndicator />
       {renderStep()}
     </div>

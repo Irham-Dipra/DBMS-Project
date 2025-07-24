@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { trackSearch } = require('../utils/searchTracker');
 
 // Unified search endpoint: either regular text search OR filtered search
 router.get('/', async (req, res) => {
@@ -119,6 +120,12 @@ router.get('/', async (req, res) => {
       const booksResult = await pool.query(bookQuery, queryParams);
       if (booksResult.rows.length > 0) data.books = booksResult.rows;
 
+      // Track filtered search
+      await trackSearch(req, 'filtered_search', null, {
+        language, genre, author, publisher, country, 
+        pubDateFrom, pubDateTo, ratingFrom, ratingTo
+      }, data);
+
       res.json({
         success: true,
         message: 'Filtered results fetched successfully',
@@ -168,6 +175,9 @@ router.get('/', async (req, res) => {
       `;
       const charactersResult = await pool.query(characterQuery, [keyword]);
       if (charactersResult.rows.length > 0) data.characters = charactersResult.rows;
+
+      // Track text search
+      await trackSearch(req, 'text_search', q.trim(), null, data);
 
       res.json({
         success: true,

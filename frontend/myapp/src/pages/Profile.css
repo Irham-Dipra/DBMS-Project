@@ -79,13 +79,27 @@
   line-height: 1.4;
 }
 
+.profile-moderator-badge {
+  font-size: 0.9rem;
+  color: #fbbf24;
+  margin: 5px 0 0 0;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+}
+
 .profile-actions {
   display: flex;
   gap: 10px;
   margin-top: 0;
 }
 
-.edit-profile-btn, .logout-btn {
+.edit-profile-btn, .logout-btn, .moderator-dashboard-btn {
   padding: 10px 20px;
   border: none;
   border-radius: 8px;
@@ -102,6 +116,19 @@
 
 .edit-profile-btn:hover {
   background: #3182ce;
+}
+
+.moderator-dashboard-btn {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: white;
+  border: 1px solid #fbbf24;
+  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+}
+
+.moderator-dashboard-btn:hover {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+  transform: translateY(-2px);
 }
 
 .logout-btn {
@@ -560,6 +587,69 @@
   font-size: 1.5rem;
   margin-bottom: 10px;
   color: white;
+}
+
+/* Deactivation Status Styles */
+.deactivation-status {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-left: 4px solid #ef4444;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+  backdrop-filter: blur(10px);
+}
+
+.deactivation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.deactivation-badge {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.reactivation-countdown {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.deactivation-reason {
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.deactivation-reason strong {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.deactivation-date {
+  font-size: 0.85rem;
+  color: #a0aec0;
+}
+
+.deactivation-date strong {
+  color: #e2e8f0;
+  font-weight: 500;
 }
 
 /* Responsive Design */

@@ -4,7 +4,6 @@ import './Home.css';
 import Homescroll from '../components/Homescroll';
 import Navbar from '../components/Navbar';
 import '../components/Navbar.css';
-import FilterBar from '../components/FilterBar';
 
 
 
@@ -13,34 +12,6 @@ function Home() {
 
   const [sections, setSections] = useState([]);
   const [loggedIn, setLoggedIn] = useState(false);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
-  // Updated filters state to use arrays for multi-select
-  const [filters, setFilters] = useState({
-    language: [],
-    genre: [],
-    author: [],
-    publisher: [],
-    country: [],
-    pubDateRange: [1800, 2025],
-    ratingRange: [0, 5]
-  });
-
-  // Check if any filters are active
-  const hasActiveFilters = () => {
-    return (
-      filters.language.length > 0 ||
-      filters.genre.length > 0 ||
-      filters.author.length > 0 ||
-      filters.publisher.length > 0 ||
-      filters.country.length > 0 ||
-      (filters.pubDateRange && (filters.pubDateRange[0] !== 1800 || filters.pubDateRange[1] !== 2025)) ||
-      (filters.ratingRange && (filters.ratingRange[0] !== 0 || filters.ratingRange[1] !== 5))
-    );
-  };
-
-  // Toggle filter bar
-  const toggleFilters = () => setIsFilterOpen(prev => !prev);
 
   useEffect(() => {
     // ✅ Check login state
@@ -91,20 +62,8 @@ function Home() {
     <div className="home-hero">
       <Navbar 
         loggedIn={loggedIn} 
-        onSearch={handleSearch} 
-        onFilterToggle={toggleFilters}
-        hasActiveFilters={hasActiveFilters()}
+        onSearch={handleSearch}
       />
-
-      {/* Filter container positioned right after navbar */}
-      <div className="filter-container">
-        <FilterBar
-          filters={filters}
-          setFilters={setFilters}
-          isOpen={isFilterOpen}
-          setIsOpen={setIsFilterOpen}
-        />
-      </div>
 
       <div className="home-content">
         {/* ✅ Render all book sections (no filtering applied on home page) */}

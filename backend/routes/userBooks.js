@@ -4,6 +4,7 @@ const { body, validationResult } = require('express-validator');
 const pool = require('../db');
 const { withTransaction } = require('../utils/transactionHelper');
 const { StoredProcedures } = require('../utils/storedProcedureHelper');
+const { checkUserActivation, optionalUserActivationCheck } = require('../middleware/userActivationCheck');
 
 const router = express.Router();
 
@@ -190,10 +191,11 @@ router.get('/shelves', verifyToken, async (req, res) => {
 });
 
 // Add a book to user's library
+// Add book to user's shelf (requires active user)
 router.post('/books', [
   body('bookId').isInt().withMessage('Book ID must be an integer'),
   body('shelf').optional().isIn(['want-to-read', 'currently-reading', 'read']).withMessage('Invalid shelf value')
-], verifyToken, async (req, res) => {
+], checkUserActivation, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -241,7 +243,8 @@ router.post('/books', [
 });
 
 // Update book shelf or rating
-router.put('/books/:bookId', verifyToken, async (req, res) => {
+// Update book shelf status (requires active user)
+router.put('/books/:bookId', checkUserActivation, async (req, res) => {
   const client = await pool.connect();
   
   try {
@@ -476,7 +479,7 @@ router.get('/stats', verifyToken, async (req, res) => {
 });
 
 // Rate a book (separate endpoint for ratings table)
-router.post('/books/:bookId/rate', verifyToken, async (req, res) => {
+router.post('/books/:bookId/rate', checkUserActivation, async (req, res) => {
   const client = await pool.connect();
   
   try {
@@ -552,7 +555,8 @@ router.post('/books/:bookId/rate', verifyToken, async (req, res) => {
 });
 
 // Set user's reading goal
-router.post('/reading-goal', verifyToken, async (req, res) => {
+// Set reading goal (requires active user)
+router.post('/reading-goal', checkUserActivation, async (req, res) => {
   try {
     const { goal } = req.body;
     const userId = req.user.id;

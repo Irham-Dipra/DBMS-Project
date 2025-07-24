@@ -14,7 +14,6 @@ function SearchResults() {
   const [loading, setLoading] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [error, setError] = useState(null);
-  const [showFilters, setShowFilters] = useState(false);
 
   // Memoize the search parameters to prevent unnecessary re-renders
   const searchParams = useMemo(() => {
@@ -154,9 +153,6 @@ function SearchResults() {
     }
   }, [navigate]);
 
-  const handleFilterToggle = () => {
-    setShowFilters(!showFilters);
-  };
 
   const getPageTitle = () => {
     if (searchParams.isFiltered) {
@@ -218,8 +214,6 @@ function SearchResults() {
       <Navbar 
         loggedIn={loggedIn} 
         onSearch={handleSearch}
-        onFilterToggle={handleFilterToggle}
-        hasActiveFilters={searchParams.isFiltered || showFilters}
       />
 
       <div className="search-results-header">

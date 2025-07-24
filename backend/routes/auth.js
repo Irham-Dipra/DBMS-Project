@@ -241,8 +241,23 @@ router.post('/logout', verifyToken, async (req, res) => {
 // Protected route example - Get user profile
 router.get('/profile', verifyToken, async (req, res) => {
   try {
-    const user = await pool.query(
-      'SELECT id, email, username, first_name, last_name, bio, profile_picture_url, created_at,EXISTS(SELECT 1 FROM moderator_accounts m WHERE m.user_id = u.id) AS is_moderator FROM users u WHERE id = $1',
+    const user = await pool.query(`
+      SELECT 
+        u.id, u.email, u.username, u.first_name, u.last_name, u.bio, 
+        u.profile_picture_url, u.created_at, u.is_active, u.deactivation_reason, 
+        u.deactivated_at, u.deactivation_duration_days, u.auto_reactivate_at,
+        EXISTS(SELECT 1 FROM moderator_accounts m WHERE m.user_id = u.id) AS is_moderator,
+        CASE 
+          WHEN u.is_active = FALSE AND u.auto_reactivate_at IS NOT NULL THEN
+            CASE 
+              WHEN u.auto_reactivate_at > CURRENT_TIMESTAMP THEN
+                EXTRACT(DAYS FROM (u.auto_reactivate_at - CURRENT_TIMESTAMP))::INTEGER
+              ELSE 0
+            END
+          ELSE NULL
+        END as days_until_reactivation
+      FROM users u 
+      WHERE u.id = $1`,
       [req.user.id]
     );
 
