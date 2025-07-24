@@ -42,6 +42,8 @@ const Signup = () => {
           errors.last_name = 'Last name is required';
         }
         break;
+      default:
+        break;
     }
     
     return errors;

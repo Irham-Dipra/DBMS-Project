@@ -1,5 +1,5 @@
 // src/components/Analytics.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -36,15 +36,7 @@ const Analytics = () => {
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF7C7C'];
 
-  useEffect(() => {
-    // Reset displayType when switching to content gaps
-    if (activeTab === 'content-gaps' && displayType === 'top-rated') {
-      setDisplayType('all');
-    }
-    fetchAnalyticsData();
-  }, [activeTab, startDate, endDate, selectedItem, displayType, minBooks, minRating, limit]);
-
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -94,6 +86,9 @@ const Analytics = () => {
         case 'book':
           endpoint = '/analytics/book-trends';
           break;
+        default:
+          endpoint = '/analytics/genre-ratings';
+          break;
       }
 
       const response = await fetch(`http://localhost:3000${endpoint}?${params}`, { headers });
@@ -122,7 +117,15 @@ const Analytics = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, startDate, endDate, selectedItem, displayType, minBooks, minRating, limit]);
+
+  useEffect(() => {
+    // Reset displayType when switching to content gaps
+    if (activeTab === 'content-gaps' && displayType === 'top-rated') {
+      setDisplayType('all');
+    }
+    fetchAnalyticsData();
+  }, [activeTab, startDate, endDate, selectedItem, displayType, minBooks, minRating, limit, fetchAnalyticsData]);
 
   const fetchOptions = async (type) => {
     try {

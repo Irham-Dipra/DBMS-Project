@@ -206,31 +206,50 @@ async function getOrCreateAuthor(client, authorData) {
     [authorData.name]
   );
   
+  // Helper function to validate if image URL is actually an author image
+  const isValidAuthorImage = (imageUrl) => {
+    if (!imageUrl) return false;
+    // Only accept URLs that contain '/author' or '/authors/' - reject book cover URLs
+    return imageUrl.includes('/author') && !imageUrl.includes('/books/');
+  };
+  
+  // Get validated author image URL
+  const validAuthorImageUrl = (authorData.image?.url && isValidAuthorImage(authorData.image.url)) 
+    ? authorData.image.url 
+    : null;
+  
   if (existingAuthor.rows.length > 0) {
     const authorId = existingAuthor.rows[0].id;
     
-    // Update existing author with image if not already present
-    if (authorData.image && authorData.image.url) {
+    // Update existing author with valid image if not already present
+    if (validAuthorImageUrl) {
       await client.query(
         'UPDATE authors SET author_image = $1 WHERE id = $2 AND author_image IS NULL',
-        [authorData.image.url, authorId]
+        [validAuthorImageUrl, authorId]
       );
+      console.log(`    ✓ Updated author image for: ${authorData.name}`);
+    } else if (authorData.image?.url) {
+      console.log(`    ⚠️ Rejected invalid author image (book cover): ${authorData.name} - ${authorData.image.url}`);
     }
     
     return authorId;
   }
   
-  // Insert author with available data (bio and image can be null)
+  // Insert author with available data (bio and validated image can be null)
   const newAuthor = await client.query(
     'INSERT INTO authors (name, bio, author_image) VALUES ($1, $2, $3) RETURNING id',
     [
       authorData.name,
       authorData.bio || null,
-      authorData.image?.url || null
+      validAuthorImageUrl
     ]
   );
   
-  console.log(`    ✓ Created author: ${authorData.name} (ID: ${newAuthor.rows[0].id}) - bio=${!!authorData.bio}, image=${!!(authorData.image?.url)}`);
+  if (authorData.image?.url && !validAuthorImageUrl) {
+    console.log(`    ⚠️ Rejected invalid author image (book cover): ${authorData.name} - ${authorData.image.url}`);
+  }
+  
+  console.log(`    ✓ Created author: ${authorData.name} (ID: ${newAuthor.rows[0].id}) - bio=${!!authorData.bio}, image=${!!validAuthorImageUrl}`);
   return newAuthor.rows[0].id;
 }
 

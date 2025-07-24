@@ -40,6 +40,9 @@ const UserAnalytics = ({ activeTab, onUserClick }) => {
         case 'user-engagement':
           endpoint = '/analytics/user-engagement';
           break;
+        default:
+          endpoint = '/analytics/user-activity-time';
+          break;
       }
 
       const response = await fetch(`http://localhost:3000${endpoint}?${params}`, { headers });

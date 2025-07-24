@@ -22,7 +22,7 @@ const BookCard = ({
   const [isAddingToWishlist, setIsAddingToWishlist] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(initialIsInWishlist || shelf === 'want-to-read');
   const [currentUserRating, setCurrentUserRating] = useState(userRating);
-  const [isRating, setIsRating] = useState(false);
+  const [, setIsRating] = useState(false);
   const [currentReadStatus, setCurrentReadStatus] = useState(isRead);
   const [isMarkingAsRead, setIsMarkingAsRead] = useState(false);
 
@@ -34,14 +34,12 @@ const BookCard = ({
     // Check for common auth token keys
     const tokenKeys = ['authToken', 'token', 'accessToken', 'jwt', 'authJWT', 'Bearer'];
     let hasToken = false;
-    let foundToken = null;
     
     for (const key of tokenKeys) {
       const token = localStorage.getItem(key);
       if (token && token.trim() !== '' && token !== 'null' && token !== 'undefined') {
         console.log(`✅ Found valid auth token with key: ${key}, value: ${token.substring(0, 20)}...`);
         hasToken = true;
-        foundToken = token;
         break;
       } else if (token) {
         console.log(`❌ Found invalid/empty token with key: ${key}, value: ${token}`);
@@ -61,7 +59,6 @@ const BookCard = ({
           if (parsed && typeof parsed === 'object') {
             console.log(`✅ Found valid user data with key: ${key}`, parsed);
             hasUserData = true;
-            foundUserData = parsed;
             break;
           }
         } catch (e) {
@@ -184,10 +181,6 @@ const BookCard = ({
     navigate(`/book/${id}`);
   };
 
-  const handlePremiumRedirect = (e) => {
-    e.stopPropagation();
-    navigate('/login');
-  };
 
   const handleAuthorClick = (e) => {
     e.stopPropagation();

@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import IndividualBook from './pages/IndividualBook';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
+import UserProfile from './pages/UserProfile';
 import Wishlist from './pages/Wishlist';
 import SearchResults from './pages/SearchResults';
 import AddBook from './pages/AddBook';
@@ -29,6 +30,7 @@ function App() {
           <Route path="/book/:id" element={<IndividualBook />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/user-profile/:userId" element={<UserProfile />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/addbook" element={<AddBook />} />
           <Route path="/my-books" element={<MyBooks />} />

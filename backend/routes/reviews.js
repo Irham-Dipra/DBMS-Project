@@ -137,6 +137,18 @@ router.get('/book/:bookId', async (req, res) => {
   console.log('📖 Fetching reviews for book ID:', bookId);
 
   try {
+    // Get user ID from token (optional)
+    let currentUserId = null;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        currentUserId = decoded.id;
+      } catch (error) {
+        // Token invalid, continue without user data
+      }
+    }
+
     const result = await pool.query(
       `SELECT 
         r.id, 
@@ -147,6 +159,8 @@ router.get('/book/:bookId', async (req, res) => {
         r.rating, 
         r.created_at, 
         r.updated_at,
+        r.upvotes,
+        r.downvotes,
         u.username as user_name,
         u.first_name,
         u.last_name,
@@ -158,8 +172,26 @@ router.get('/book/:bookId', async (req, res) => {
       [bookId]
     );
 
-    console.log('✅ Reviews fetched successfully:', result.rows.length, 'reviews found');
-    res.json(result.rows);
+    // Get current user's votes for each review if logged in
+    const reviewsWithVotes = await Promise.all(
+      result.rows.map(async (review) => {
+        let userVote = null;
+        if (currentUserId) {
+          const voteResult = await pool.query(
+            'SELECT vote_type FROM votes WHERE review_id = $1 AND user_id = $2',
+            [review.id, currentUserId]
+          );
+          userVote = voteResult.rows.length > 0 ? voteResult.rows[0].vote_type : null;
+        }
+        return {
+          ...review,
+          user_vote: userVote
+        };
+      })
+    );
+
+    console.log('✅ Reviews fetched successfully:', reviewsWithVotes.length, 'reviews found');
+    res.json(reviewsWithVotes);
   } catch (err) {
     console.error('❌ Error fetching reviews:', err);
     console.error('❌ Error details:', {

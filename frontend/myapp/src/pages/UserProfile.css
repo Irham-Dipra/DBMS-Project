@@ -1,0 +1,462 @@
+/* Facebook-style Profile Page */
+.profile-page {
+  min-height: 100vh;
+  background: #0f1419;
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Profile Header Section */
+.profile-header-section {
+  background: #1a1f24;
+  border-bottom: 1px solid #2d3748;
+  padding: 30px 20px;
+}
+
+.profile-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+  position: relative;
+}
+
+.profile-picture-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-picture {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 5px solid #2d3748;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-initials {
+  font-size: 3.5rem;
+  font-weight: bold;
+  color: white;
+}
+
+.profile-info {
+  margin-top: 0;
+}
+
+.profile-name {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 5px 0;
+  color: white;
+}
+
+.profile-username {
+  font-size: 1.1rem;
+  color: #a0aec0;
+  margin: 0 0 10px 0;
+}
+
+.profile-bio {
+  font-size: 1rem;
+  color: #e2e8f0;
+  margin: 10px 0 0 0;
+  max-width: 500px;
+  line-height: 1.4;
+}
+
+/* Main Content Area */
+.profile-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  gap: 30px;
+  padding: 30px 20px;
+}
+
+/* Sidebar */
+.profile-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sidebar-section {
+  background: linear-gradient(145deg, #1a1f24 0%, #1e2328 100%);
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-section h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f7fafc;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #4a5568;
+}
+
+.stats-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #2d3748;
+}
+
+.stat-row:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #cbd5e0;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f7fafc;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Main Feed */
+.profile-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.content-section {
+  background: linear-gradient(145deg, #1a1f24 0%, #1e2328 100%);
+  border: 1px solid #2d3748;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #4a5568;
+}
+
+.section-header h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #f7fafc;
+  margin: 0;
+}
+
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.review-card {
+  background: linear-gradient(145deg, #0f1419 0%, #1a1f24 100%);
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.review-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.profile-review-header {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: flex-start;
+}
+
+.book-cover-mini {
+  width: 50px;
+  height: 75px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.review-book-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-book-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f7fafc;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.profile-review-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-review-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.star.filled {
+  color: #fbbf24;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.star.empty {
+  color: #4a5568;
+}
+
+.profile-review-value {
+  font-size: 0.9rem;
+  color: #a0aec0;
+  font-weight: 600;
+}
+
+.profile-review-date {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.review-content-section {
+  padding-left: 0;
+}
+
+.profile-review-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fbbf24;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.profile-review-body {
+  color: #e2e8f0;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #94a3b8;
+  background: linear-gradient(145deg, #1a1f24 0%, #1e2328 100%);
+  border: 1px solid #2d3748;
+  border-radius: 16px;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+/* Loading and Error States */
+.loading-state, .error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 20px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #334155;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-state h2 {
+  color: #ef4444;
+  margin: 0;
+}
+
+.back-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: transform 0.2s ease;
+}
+
+.back-button:hover {
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .profile-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .profile-sidebar {
+    width: 100%;
+    flex-direction: row;
+    gap: 20px;
+    overflow-x: auto;
+  }
+  
+  .sidebar-section {
+    min-width: 250px;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  
+  .profile-picture-section {
+    width: 100%;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+  
+  .profile-picture {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .profile-initials {
+    font-size: 2.5rem;
+  }
+  
+  .profile-name {
+    font-size: 2rem;
+  }
+  
+  .profile-content {
+    padding: 20px;
+  }
+  
+  .sidebar-section {
+    min-width: 200px;
+    padding: 16px;
+  }
+  
+  .content-section {
+    padding: 20px;
+  }
+  
+  .books-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+  }
+  
+  .profile-review-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .profile-review-date {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-header-section {
+    padding: 20px 16px;
+  }
+  
+  .profile-content {
+    padding: 16px;
+  }
+  
+  .profile-sidebar {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .sidebar-section {
+    min-width: unset;
+  }
+  
+  .profile-picture {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .profile-initials {
+    font-size: 2rem;
+  }
+  
+  .profile-name {
+    font-size: 1.8rem;
+  }
+  
+  .books-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+  }
+}

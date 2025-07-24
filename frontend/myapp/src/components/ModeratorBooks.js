@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ModeratorBooks.css';
 
@@ -58,9 +58,9 @@ const ModeratorBooks = () => {
   useEffect(() => {
     fetchBooks();
     fetchFilterOptions();
-  }, [pagination.currentPage, searchQuery, filters, sortBy, sortOrder]);
+  }, [pagination.currentPage, searchQuery, filters, sortBy, sortOrder, fetchBooks]);
 
-  const fetchBooks = async () => {
+  const fetchBooks = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -111,7 +111,7 @@ const ModeratorBooks = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.currentPage, searchQuery, filters, sortBy, sortOrder]);
 
   const fetchFilterOptions = async () => {
     try {

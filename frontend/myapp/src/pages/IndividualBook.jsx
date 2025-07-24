@@ -78,7 +78,18 @@ import React, { useEffect, useState, useRef } from 'react';
       const fetchReviews = async () => {
         try {
           setReviewsLoading(true);
-          const res = await fetch(`http://localhost:3000/reviews/book/${id}`);
+          
+          const headers = {
+            'Content-Type': 'application/json'
+          };
+
+          // Add authorization header if token exists
+          const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+
+          const res = await fetch(`http://localhost:3000/reviews/book/${id}`, { headers });
           if (!res.ok) throw new Error('Failed to fetch reviews');
           const data = await res.json();
           setReviews(data);
@@ -722,54 +733,27 @@ import React, { useEffect, useState, useRef } from 'react';
             )}
             
             {!reviewsLoading && !reviewsError && reviews.length > 0 && (
-              <div className="goodreads-reviews-list">
+              <div className="reviews-container">
                 {reviews.map((review) => (
-                  <div key={review.id} className="goodreads-review-item">
-                    <div className="review-user-section">
-                      <div className="user-avatar">
-                        {review.profile_picture_url ? (
-                          <img src={review.profile_picture_url} alt="Profile" className="avatar-img" />
-                        ) : (
-                          <div className="avatar-placeholder">
-                            {(review.first_name && review.last_name) 
-                              ? `${review.first_name.charAt(0)}${review.last_name.charAt(0)}`.toUpperCase()
-                              : review.user_name?.charAt(0)?.toUpperCase() || '?'}
-                          </div>
-                        )}
-                      </div>
-                      <div className="user-info">
-                        <div className="user-name">
-                          {(review.first_name && review.last_name) 
-                            ? `${review.first_name} ${review.last_name}`
-                            : review.user_name}
-                        </div>
-                        <div className="review-rating-stars">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <FaStar 
-                              key={star} 
-                              className={`review-star ${star <= review.rating ? 'filled' : 'empty'}`}
-                            />
-                          ))}
-                        </div>
-                        <div className="review-date">
-                          {new Date(review.created_at).toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="review-content-section">
-                      {review.title && (
-                        <h4 className="review-title-display">{review.title}</h4>
-                      )}
-                      <div className="review-text">
-                        {review.body}
-                      </div>
-                    </div>
-                  </div>
+                  <Review
+                    key={review.id}
+                    id={review.id}
+                    title={review.title}
+                    body={review.body}
+                    reviewerName={review.user_name}
+                    firstName={review.first_name}
+                    lastName={review.last_name}
+                    userId={review.user_id}
+                    profilePictureUrl={review.profile_picture_url}
+                    bookTitle={book?.title || 'Unknown Book'}
+                    bookCoverUrl={book?.cover_image}
+                    authorName={book?.author_name || 'Unknown Author'}
+                    rating={review.rating}
+                    created_at={review.created_at}
+                    initialUpvotes={review.upvotes || 0}
+                    initialDownvotes={review.downvotes || 0}
+                    initialUserVote={review.user_vote}
+                  />
                 ))}
               </div>
             )}

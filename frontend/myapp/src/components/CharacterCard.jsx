@@ -1,10 +1,8 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { FaUser } from 'react-icons/fa';
 import './CharacterCard.css';
 
 function CharacterCard({ id, name, description, onClick }) {
-  const navigate = useNavigate();
 
   const handleClick = () => {
     if (onClick) {
