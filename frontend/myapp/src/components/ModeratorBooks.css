@@ -12,6 +12,7 @@
 .moderator-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 30px;
   background: linear-gradient(135deg, #1a1f24 0%, #2d3748 100%);
   padding: 25px;
@@ -29,7 +30,6 @@
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;
-  margin-right: 20px;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
 }
@@ -49,6 +49,25 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.add-book-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.add-book-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
 }
 
 .search-filters-section {

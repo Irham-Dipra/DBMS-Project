@@ -31,10 +31,6 @@ const ModeratorDash = () => {
     navigate('/analytics');
   };
 
-  const handleAddBookClick = () => {
-    navigate('/addbook');
-  };
-
   const handleBooksManagementClick = () => {
     navigate('/moderator-books');
   };
@@ -53,10 +49,6 @@ const ModeratorDash = () => {
       </div>
       <p>Welcome to the Moderator Dashboard!</p>
       <div className="dashboard-content">
-        <div className="dashboard-card" onClick={handleAddBookClick} style={{ cursor: 'pointer' }}>
-          <h3>📚 Add Book</h3>
-          <p>Add new books to the platform</p>
-        </div>
         <div className="dashboard-card" onClick={handleBooksManagementClick} style={{ cursor: 'pointer' }}>
           <h3>📖 Manage Books</h3>
           <p>Update or delete existing books</p>

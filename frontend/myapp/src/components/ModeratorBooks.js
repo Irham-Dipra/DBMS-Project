@@ -278,6 +278,9 @@ const ModeratorBooks = () => {
           ← Back to Dashboard
         </button>
         <h1>📚 Book Management</h1>
+        <button className="add-book-btn" onClick={() => navigate('/addbook')}>
+          ➕ Add New Book
+        </button>
       </div>
 
       {/* Search and Filters */}
