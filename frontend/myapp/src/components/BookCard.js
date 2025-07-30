@@ -62,11 +62,55 @@ const BookCard = ({
   };
 
   const addToWishlist = async (userId, bookId) => {
-    // Your existing API call...
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      
+      const response = await fetch('http://localhost:3000/myBooks/books', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          bookId: bookId,
+          shelf: 'want-to-read'
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add to wishlist');
+      }
+
+      console.log('✅ Book added to wishlist successfully!');
+    } catch (error) {
+      console.error('Failed to add to wishlist:', error);
+      throw error;
+    }
   };
 
   const removeFromWishlist = async (userId, bookId) => {
-    // Your existing API call...
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      
+      const response = await fetch(`http://localhost:3000/myBooks/books/${bookId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to remove from wishlist');
+      }
+
+      console.log('✅ Book removed from wishlist successfully!');
+    } catch (error) {
+      console.error('Failed to remove from wishlist:', error);
+      throw error;
+    }
   };
 
   const handleWishlistClick = async () => {
@@ -190,27 +234,16 @@ const handleRatingChange = async (rating) => {
       } else {
         // Different error, throw it
         console.error('Rating error:', errorData);
-// >>>>>>> feature/analytics-dashboard
         throw new Error(errorData.message || 'Failed to update rating');
       }
     }
 
-// <<<<<<< newbranch
-//       setCurrentUserRating(rating);
-//       console.log('✅ Rating updated successfully!');
-//     } catch (error) {
-//       console.error('Failed to update rating:', error);
-//       alert('Failed to update rating. Please try again.');
-//     } finally {
-//       setIsRating(false);
-// =======
     const data = await rateResponse.json();
     setCurrentUserRating(rating);
     
     // Update average rating if provided by backend
     if (data.newAverageRating) {
       setCurrentAverageRating(data.newAverageRating);
-// >>>>>>> feature/analytics-dashboard
     }
     
     console.log('✅ Rating updated successfully!');
@@ -267,7 +300,6 @@ const handleRatingChange = async (rating) => {
         console.log('Book already in library, proceeding...');
       } else {
         console.error('Error response:', errorData);
-// >>>>>>> feature/analytics-dashboard
         throw new Error(errorData.message || 'Failed to add book to library');
       }
     }
@@ -276,7 +308,6 @@ const handleRatingChange = async (rating) => {
 // =======
     // If rating was requested, rate the book
     if (rating) {
-// >>>>>>> feature/analytics-dashboard
       const rateResponse = await fetch(`http://localhost:3000/myBooks/books/${id}/rate`, {
         method: 'POST',
         headers: {
@@ -288,29 +319,16 @@ const handleRatingChange = async (rating) => {
 
       if (!rateResponse.ok) {
         const errorData = await rateResponse.json();
-// <<<<<<< newbranch
-// =======
         console.error('Rating error:', errorData);
-// >>>>>>> feature/analytics-dashboard
         throw new Error(errorData.message || 'Failed to update rating');
       }
 
       const data = await rateResponse.json();
       setCurrentUserRating(rating);
-// <<<<<<< newbranch
-//       console.log('✅ Book added to library and rated successfully!');
-//       setCurrentShelf('want-to-read'); // Keep shelf in sync
-//     } catch (error) {
-//       console.error('Failed to add book and rate:', error);
-//       alert('Failed to add book and rate. Please try again.');
-//     } finally {
-//       setIsRating(false);
-// =======
       
       if (data.newAverageRating) {
         setCurrentAverageRating(data.newAverageRating);
       }
-// >>>>>>> feature/analytics-dashboard
     }
     
     console.log('✅ Book added to library' + (rating ? ' and rated' : '') + ' successfully!');
@@ -477,9 +495,13 @@ const handleRatingChange = async (rating) => {
             <>
               <div className="loading-spinner" /> {isInWishlist ? 'Removing...' : 'Adding...'}
             </>
-          ) : currentShelf === 'read' || currentShelf === 'currently-reading' ? (
+          ) : currentShelf === 'read' ? (
             <>
               <FaCheck className="check-icon" /> Already Read
+            </>
+          ) : currentShelf === 'currently-reading' ? (
+            <>
+              <FaCheck className="check-icon" /> Currently Reading
             </>
           ) : isInWishlist ? (
             <>

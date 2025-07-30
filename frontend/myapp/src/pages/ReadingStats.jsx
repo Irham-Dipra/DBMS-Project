@@ -211,13 +211,15 @@ function ReadingStats() {
         onSearch={handleSearch}
       />
 
+      <div className="back-button-container">
+        <button className="back-btn" onClick={() => navigate('/my-books')}>
+          <FaArrowLeft />
+          Back to My Books
+        </button>
+      </div>
       
       <div className="stats-content">
         <div className="stats-header">
-          <button className="back-btn" onClick={() => navigate('/my-books')}>
-            <FaArrowLeft />
-            Back to My Books
-          </button>
           <h1>Reading Statistics</h1>
           <p>Your personal reading journey insights</p>
         </div>

@@ -47,49 +47,98 @@ router.get('/books', verifyToken, async (req, res) => {
 
     const offset = (page - 1) * limit;
     
-    // Build the query based on shelf filter - FIXED to use correct table/column names
-    let query = `
-      SELECT 
-        b.id,
-        b.title,
-        (SELECT a.name FROM authors a 
-         JOIN book_authors ba ON a.id = ba.author_id 
-         WHERE ba.book_id = b.id 
-         ORDER BY a.id ASC LIMIT 1) as author,
-        b.cover_image as cover_url,
-        COALESCE(b.average_rating, 0)::float as avg_rating,
-        ub.shelf,
-        ub.date_added,
-        ub.date_read,
-        ub.review_id,
-        r.body as review,
-        (
-          SELECT array_agg(DISTINCT g.name ORDER BY g.name)
-          FROM genres g
-          JOIN book_genres bg ON g.id = bg.genre_id
-          WHERE bg.book_id = b.id
-        ) as genres,
-        l.name as language,
-        rt.value as user_rating
-      FROM books b
-      INNER JOIN user_books ub ON b.id = ub.book_id
-      LEFT JOIN reviews r ON ub.review_id = r.id
-      LEFT JOIN languages l ON b.language_id = l.id
-      LEFT JOIN ratings rt ON b.id = rt.book_id AND rt.user_id = ub.user_id
-      WHERE ub.user_id = $1
-    `;
-    
-    const queryParams = [userId];
-    let paramCount = 1;
+    let query, queryParams, countQuery, countParams;
 
-    // Add shelf filter
-    if (shelf !== 'all') {
-      paramCount++;
-      query += ` AND ub.shelf = $${paramCount}`;
-      queryParams.push(shelf);
+    if (shelf === 'all') {
+      // For "All" shelf: show all distinct books from user_books + untracked rated books
+      query = `
+        SELECT DISTINCT
+          b.id,
+          b.title,
+          (SELECT a.name FROM authors a 
+           JOIN book_authors ba ON a.id = ba.author_id 
+           WHERE ba.book_id = b.id 
+           ORDER BY a.id ASC LIMIT 1) as author,
+          b.cover_image as cover_url,
+          COALESCE(b.average_rating, 0)::float as avg_rating,
+          COALESCE(ub.shelf, 'untracked') as shelf,
+          COALESCE(ub.date_added, rt.created_at) as date_added,
+          ub.date_read,
+          ub.review_id,
+          r.body as review,
+          (
+            SELECT array_agg(DISTINCT g.name ORDER BY g.name)
+            FROM genres g
+            JOIN book_genres bg ON g.id = bg.genre_id
+            WHERE bg.book_id = b.id
+          ) as genres,
+          l.name as language,
+          rt.value as user_rating
+        FROM books b
+        LEFT JOIN user_books ub ON b.id = ub.book_id AND ub.user_id = $1
+        LEFT JOIN ratings rt ON b.id = rt.book_id AND rt.user_id = $1
+        LEFT JOIN reviews r ON ub.review_id = r.id
+        LEFT JOIN languages l ON b.language_id = l.id
+        WHERE (ub.user_id = $1 OR rt.user_id = $1)
+      `;
+      
+      queryParams = [userId];
+      
+      // Count query for "All" shelf
+      countQuery = `
+        SELECT COUNT(DISTINCT b.id) as total
+        FROM books b
+        LEFT JOIN user_books ub ON b.id = ub.book_id AND ub.user_id = $1
+        LEFT JOIN ratings rt ON b.id = rt.book_id AND rt.user_id = $1
+        WHERE (ub.user_id = $1 OR rt.user_id = $1)
+      `;
+      countParams = [userId];
+      
+    } else {
+      // For specific shelves
+      query = `
+        SELECT 
+          b.id,
+          b.title,
+          (SELECT a.name FROM authors a 
+           JOIN book_authors ba ON a.id = ba.author_id 
+           WHERE ba.book_id = b.id 
+           ORDER BY a.id ASC LIMIT 1) as author,
+          b.cover_image as cover_url,
+          COALESCE(b.average_rating, 0)::float as avg_rating,
+          ub.shelf,
+          ub.date_added,
+          ub.date_read,
+          ub.review_id,
+          r.body as review,
+          (
+            SELECT array_agg(DISTINCT g.name ORDER BY g.name)
+            FROM genres g
+            JOIN book_genres bg ON g.id = bg.genre_id
+            WHERE bg.book_id = b.id
+          ) as genres,
+          l.name as language,
+          rt.value as user_rating
+        FROM books b
+        INNER JOIN user_books ub ON b.id = ub.book_id
+        LEFT JOIN reviews r ON ub.review_id = r.id
+        LEFT JOIN languages l ON b.language_id = l.id
+        LEFT JOIN ratings rt ON b.id = rt.book_id AND rt.user_id = ub.user_id
+        WHERE ub.user_id = $1 AND ub.shelf = $2
+      `;
+      
+      queryParams = [userId, shelf];
+      
+      // Count query for specific shelves
+      countQuery = `
+        SELECT COUNT(*) as total
+        FROM user_books ub
+        WHERE ub.user_id = $1 AND ub.shelf = $2
+      `;
+      countParams = [userId, shelf];
     }
 
-    // Add sorting - FIXED to use correct column names
+    // Add sorting
     const validSortFields = ['date_added', 'date_read', 'title', 'author', 'rating'];
     const sortField = validSortFields.includes(sort) ? sort : 'date_added';
     const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
@@ -104,34 +153,17 @@ router.get('/books', verifyToken, async (req, res) => {
                     WHERE ba.book_id = b.id 
                     ORDER BY a.id ASC LIMIT 1) ${sortOrder}`;
     } else {
-      query += ` ORDER BY ub.${sortField} ${sortOrder}`;
+      query += ` ORDER BY COALESCE(ub.${sortField}, rt.created_at) ${sortOrder}`;
     }
 
     // Add pagination
-    paramCount++;
-    query += ` LIMIT $${paramCount}`;
     queryParams.push(parseInt(limit));
+    query += ` LIMIT $${queryParams.length}`;
     
-    paramCount++;
-    query += ` OFFSET $${paramCount}`;
     queryParams.push(offset);
+    query += ` OFFSET $${queryParams.length}`;
 
     const books = await pool.query(query, queryParams);
-
-    // Get total count for pagination
-    let countQuery = `
-      SELECT COUNT(*) as total
-      FROM user_books ub
-      WHERE ub.user_id = $1
-    `;
-    
-    const countParams = [userId];
-    
-    if (shelf !== 'all') {
-      countQuery += ' AND ub.shelf = $2';
-      countParams.push(shelf);
-    }
-
     const countResult = await pool.query(countQuery, countParams);
     const totalBooks = parseInt(countResult.rows[0].total);
 
@@ -154,24 +186,157 @@ router.get('/books', verifyToken, async (req, res) => {
   }
 });
 
-// Get user's shelves with book counts
+// Get user's rated books
+router.get('/rated-books', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { 
+      sort = 'date_added', 
+      order = 'desc', 
+      page = 1, 
+      limit = 20 
+    } = req.query;
+
+    const offset = (page - 1) * limit;
+    
+    // Query to get all books the user has rated
+    let query = `
+      SELECT 
+        b.id,
+        b.title,
+        (SELECT a.name FROM authors a 
+         JOIN book_authors ba ON a.id = ba.author_id 
+         WHERE ba.book_id = b.id 
+         ORDER BY a.id ASC LIMIT 1) as author,
+        b.cover_image as cover_url,
+        COALESCE(b.average_rating, 0)::float as avg_rating,
+        COALESCE(ub.shelf, 'untracked') as shelf,
+        COALESCE(ub.date_added, rt.created_at) as date_added,
+        ub.date_read,
+        ub.review_id,
+        r.body as review,
+        (
+          SELECT array_agg(DISTINCT g.name ORDER BY g.name)
+          FROM genres g
+          JOIN book_genres bg ON g.id = bg.genre_id
+          WHERE bg.book_id = b.id
+        ) as genres,
+        l.name as language,
+        rt.value as user_rating,
+        rt.created_at as rating_date
+      FROM ratings rt
+      INNER JOIN books b ON rt.book_id = b.id
+      LEFT JOIN user_books ub ON b.id = ub.book_id AND ub.user_id = rt.user_id
+      LEFT JOIN reviews r ON ub.review_id = r.id
+      LEFT JOIN languages l ON b.language_id = l.id
+      WHERE rt.user_id = $1
+    `;
+    
+    const queryParams = [userId];
+
+    // Add sorting
+    const validSortFields = ['date_added', 'date_read', 'title', 'author', 'rating', 'rating_date'];
+    const sortField = validSortFields.includes(sort) ? sort : 'rating_date';
+    const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
+    
+    if (sortField === 'rating') {
+      query += ` ORDER BY rt.value ${sortOrder}`;
+    } else if (sortField === 'rating_date') {
+      query += ` ORDER BY rt.created_at ${sortOrder}`;
+    } else if (sortField === 'title') {
+      query += ` ORDER BY b.title ${sortOrder}`;
+    } else if (sortField === 'author') {
+      query += ` ORDER BY (SELECT a.name FROM authors a 
+                    JOIN book_authors ba ON a.id = ba.author_id 
+                    WHERE ba.book_id = b.id 
+                    ORDER BY a.id ASC LIMIT 1) ${sortOrder}`;
+    } else {
+      query += ` ORDER BY COALESCE(ub.${sortField}, rt.created_at) ${sortOrder}`;
+    }
+
+    // Add pagination
+    queryParams.push(parseInt(limit));
+    query += ` LIMIT $${queryParams.length}`;
+    
+    queryParams.push(offset);
+    query += ` OFFSET $${queryParams.length}`;
+
+    const books = await pool.query(query, queryParams);
+
+    // Get total count for pagination
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM ratings rt
+      WHERE rt.user_id = $1
+    `;
+    
+    const countResult = await pool.query(countQuery, [userId]);
+    const totalBooks = parseInt(countResult.rows[0].total);
+
+    res.json({
+      success: true,
+      books: books.rows,
+      totalBooks,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalBooks / limit),
+      hasNextPage: page * limit < totalBooks,
+      hasPrevPage: page > 1
+    });
+
+  } catch (error) {
+    console.error('Error fetching rated books:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error while fetching rated books' 
+    });
+  }
+});
+
+// Update shelves endpoint to show accurate counts
 router.get('/shelves', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
     
     const query = `
-      SELECT 
-        shelf as name,
-        COUNT(*) as count
-      FROM user_books 
-      WHERE user_id = $1
-      GROUP BY shelf
+      WITH shelf_counts AS (
+        -- Count books in each shelf from user_books
+        SELECT 
+          shelf as name,
+          COUNT(*) as count
+        FROM user_books 
+        WHERE user_id = $1
+        GROUP BY shelf
+        
+        UNION ALL
+        
+        -- Count all rated books (all types: untracked, want-to-read, currently-reading, read)
+        SELECT 
+          'rated' as name,
+          COUNT(*) as count
+        FROM ratings
+        WHERE user_id = $1
+        
+        UNION ALL
+        
+        -- Count all distinct books (books in user_books + untracked rated books)
+        SELECT 
+          'all' as name,
+          COUNT(DISTINCT b.id) as count
+        FROM books b
+        LEFT JOIN user_books ub ON b.id = ub.book_id AND ub.user_id = $1
+        LEFT JOIN ratings rt ON b.id = rt.book_id AND rt.user_id = $1
+        WHERE (ub.user_id = $1 OR rt.user_id = $1)
+      )
+      SELECT name, count
+      FROM shelf_counts
       ORDER BY 
-        CASE shelf 
+        CASE name 
+          WHEN 'all' THEN 0
           WHEN 'want-to-read' THEN 1
           WHEN 'currently-reading' THEN 2
           WHEN 'read' THEN 3
-          ELSE 4
+          WHEN 'rated' THEN 4
+          ELSE 5
         END
     `;
 
@@ -250,6 +415,28 @@ router.put('/books/:bookId', checkUserActivation, async (req, res) => {
     // Manual validation since express-validator has issues with null values
     const { shelf, rating, dateRead, notes } = req.body;
     
+    // Handle "untracked" case - delete the book from library
+    if (shelf === 'untracked') {
+      const userId = req.user.id;
+      const { bookId } = req.params;
+
+      const deleteQuery = 'DELETE FROM user_books WHERE user_id = $1 AND book_id = $2';
+      const result = await client.query(deleteQuery, [userId, bookId]);
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({ 
+          success: false,
+          message: 'Book not found in library' 
+        });
+      }
+
+      return res.json({ 
+        success: true,
+        message: 'Book removed from library successfully',
+        action: 'deleted'
+      });
+    }
+    
     if (shelf !== undefined && shelf !== null && !['want-to-read', 'currently-reading', 'read'].includes(shelf)) {
       await client.query('ROLLBACK');
       return res.status(400).json({
@@ -298,7 +485,8 @@ router.put('/books/:bookId', checkUserActivation, async (req, res) => {
 
       return res.json({ 
         success: true,
-        message: 'Book removed from library (unmarked as read)' 
+        message: 'Book removed from library (unmarked as read)',
+        action: 'deleted'
       });
     }
 
@@ -396,19 +584,13 @@ router.put('/books/:bookId', checkUserActivation, async (req, res) => {
 
     res.json({ 
       success: true,
-      message: 'Book updated successfully' 
+      message: 'Book updated successfully',
+      action: 'updated'
     });
 
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Error updating book:', error);
-    console.error('Stack trace:', error.stack);
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      detail: error.detail,
-      hint: error.hint
-    });
     res.status(500).json({ 
       success: false,
       message: 'Server error while updating book',
@@ -538,8 +720,8 @@ router.post('/books/:bookId/rate', checkUserActivation, async (req, res) => {
     );
     const internalRatingsCount = parseInt(internalRatingsResult.rows[0].count);
 
-    // ✅ YOUR REQUIREMENT: Assume 500 external ratings + internal ratings
-    const EXTERNAL_RATINGS_COUNT = 1;
+    // ✅ Simulate 500 external ratings consistently
+    const EXTERNAL_RATINGS_COUNT = 500;
     const currentTotalRatings = EXTERNAL_RATINGS_COUNT + internalRatingsCount;
     
     // Calculate current total rating points
@@ -601,7 +783,7 @@ router.post('/books/:bookId/rate', checkUserActivation, async (req, res) => {
       message: existingRating.rows.length > 0 ? 'Rating updated successfully' : 'Rating saved successfully',
       rating: rating,
       newAverageRating: newAverageRating,
-      totalRatings: newTotalRatings, // Include this for debugging
+      totalRatings: newTotalRatings,
       previousRating: existingRating.rows.length > 0 ? existingRating.rows[0].value : null
     });
 
@@ -611,6 +793,106 @@ router.post('/books/:bookId/rate', checkUserActivation, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while saving rating',
+      error: error.message
+    });
+  } finally {
+    client.release();
+  }
+});
+
+// Remove user's rating for a book
+router.delete('/books/:bookId/rating', verifyToken, async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const userId = req.user.id;
+    const { bookId } = req.params;
+
+    // Start transaction
+    await client.query('BEGIN');
+
+    // Check if user has rated this book
+    const existingRating = await client.query(
+      'SELECT id, value FROM ratings WHERE user_id = $1 AND book_id = $2',
+      [userId, bookId]
+    );
+
+    if (existingRating.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({
+        success: false,
+        message: 'No rating found for this book'
+      });
+    }
+
+    const oldRating = parseFloat(existingRating.rows[0].value);
+
+    // Get current book info
+    const bookInfo = await client.query(
+      'SELECT id, average_rating FROM books WHERE id = $1',
+      [bookId]
+    );
+
+    if (bookInfo.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({
+        success: false,
+        message: 'Book not found'
+      });
+    }
+
+    const currentAverageRating = parseFloat(bookInfo.rows[0].average_rating) || 4.0;
+
+    // Get count of internal ratings (before deletion)
+    const internalRatingsResult = await client.query(
+      'SELECT COUNT(*) as count FROM ratings WHERE book_id = $1',
+      [bookId]
+    );
+    const internalRatingsCount = parseInt(internalRatingsResult.rows[0].count);
+
+    // Simulate 500 external ratings consistently
+    const EXTERNAL_RATINGS_COUNT = 500;
+    const currentTotalRatings = EXTERNAL_RATINGS_COUNT + internalRatingsCount;
+    
+    // Calculate current total rating points
+    const currentTotalPoints = currentTotalRatings * currentAverageRating;
+
+    // Remove the user's rating
+    await client.query(
+      'DELETE FROM ratings WHERE user_id = $1 AND book_id = $2',
+      [userId, bookId]
+    );
+
+    // Calculate new average rating (removing one rating)
+    const adjustedTotalPoints = currentTotalPoints - oldRating;
+    const newTotalRatings = currentTotalRatings - 1;
+    const newAverageRating = Math.round((adjustedTotalPoints / newTotalRatings) * 100) / 100;
+
+    // Update book's average rating
+    await client.query(
+      'UPDATE books SET average_rating = $1 WHERE id = $2',
+      [newAverageRating, bookId]
+    );
+
+    // Commit transaction
+    await client.query('COMMIT');
+
+    console.log(`✅ Rating removed: Old rating: ${oldRating}, New average: ${newAverageRating}`);
+
+    res.json({
+      success: true,
+      message: 'Rating removed successfully',
+      removedRating: oldRating,
+      newAverageRating: newAverageRating,
+      totalRatings: newTotalRatings
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('❌ Error removing rating:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while removing rating',
       error: error.message
     });
   } finally {

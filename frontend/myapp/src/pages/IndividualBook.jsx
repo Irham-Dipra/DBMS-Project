@@ -56,14 +56,26 @@ import React, { useEffect, useState, useRef } from 'react';
             headers['Authorization'] = `Bearer ${token}`;
           }
 
+          console.log('Fetching book with ID:', id);
           const res = await fetch(`http://localhost:3000/books/${id}`, { headers });
-          if (!res.ok) throw new Error('Failed to fetch book details');
+          
+          if (!res.ok) {
+            const errorData = await res.json();
+            console.error('API Error:', errorData);
+            throw new Error(errorData.message || `HTTP ${res.status}: Failed to fetch book details`);
+          }
+          
           const data = await res.json();
+          console.log('Book data received:', data);
 
           setBook(data);
           setUserRating(data.user_rating || 0);
-          setCurrentShelf(data.shelf);
+          // Set shelf to 'untracked' if no shelf value or null
+          setCurrentShelf(data.shelf || 'untracked');
+          // Set review rating to existing user rating
+          setReviewRating(data.user_rating || 0);
         } catch (err) {
+          console.error('Fetch error:', err);
           setError(err.message);
         } finally {
           setLoading(false);
@@ -154,7 +166,7 @@ import React, { useEffect, useState, useRef } from 'react';
         setReviewMessage('✅ Review submitted successfully!');
         setReviewTitle('');
         setReviewBody('');
-        setReviewRating(0);
+        // ✅ Don't reset review rating - keep the existing rating
 
         // Refresh reviews after successful submission
         const refreshRes = await fetch(`http://localhost:3000/reviews/book/${id}`);
@@ -182,24 +194,30 @@ import React, { useEffect, useState, useRef } from 'react';
       try {
         const token = localStorage.getItem('token') || localStorage.getItem('authToken');
 
-        // First add book to library if not already added
-        if (!currentShelf) {
-          const addResponse = await fetch('http://localhost:3000/myBooks/books', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              bookId: id
-            })
-          });
-          // It's okay if this fails (book might already be in library)
+        // ✅ First add book to library if untracked
+        if (currentShelf === 'untracked') {
+          try {
+            await fetch('http://localhost:3000/myBooks/books', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                bookId: id,
+                shelf: 'want-to-read'
+              })
+            });
+            setCurrentShelf('want-to-read');
+          } catch (error) {
+            // It's okay if this fails (book might already be in library)
+            console.log('Book may already be in library');
+          }
         }
 
-        // Then rate the book
-        const rateResponse = await fetch(`http://localhost:3000/myBooks/books/${id}`, {
-          method: 'PUT',
+        // ✅ Use the correct rating endpoint
+        const rateResponse = await fetch(`http://localhost:3000/myBooks/books/${id}/rate`, {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
@@ -210,14 +228,30 @@ import React, { useEffect, useState, useRef } from 'react';
         });
 
         if (!rateResponse.ok) {
-          throw new Error('Failed to update rating');
+          const errorData = await rateResponse.json();
+          throw new Error(errorData.message || 'Failed to update rating');
         }
 
+        const rateData = await rateResponse.json();
+        
+        // ✅ Update both user rating and book's average rating
         setUserRating(rating);
+        // ✅ Also update the review rating to sync with the main rating
+        setReviewRating(rating);
+        
+        // Update the book's average rating in the UI
+        if (rateData.newAverageRating) {
+          setBook(prevBook => ({
+            ...prevBook,
+            average_rating: rateData.newAverageRating
+          }));
+        }
+
+        console.log('✅ Rating updated successfully:', rateData);
 
       } catch (error) {
         console.error('Failed to rate book:', error);
-        alert('Failed to rate book. Please try again.');
+        alert(`Failed to rate book: ${error.message}`);
       } finally {
         setIsRating(false);
       }
@@ -235,42 +269,60 @@ import React, { useEffect, useState, useRef } from 'react';
       try {
         const token = localStorage.getItem('token') || localStorage.getItem('authToken');
 
-        if (!currentShelf) {
-          // Add book to library with specified shelf
-          const addResponse = await fetch('http://localhost:3000/myBooks/books', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              bookId: id,
-              shelf: shelf
-            })
-          });
+        if (shelf === 'untracked') {
+          // ✅ Remove book from library (untrack it)
+          if (currentShelf !== 'untracked') {
+            const deleteResponse = await fetch(`http://localhost:3000/myBooks/books/${id}`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              }
+            });
 
-          if (!addResponse.ok) {
-            throw new Error('Failed to add book to library');
+            if (!deleteResponse.ok) {
+              throw new Error('Failed to remove book from library');
+            }
           }
+          setCurrentShelf('untracked');
         } else {
-          // Update existing book shelf
-          const updateResponse = await fetch(`http://localhost:3000/myBooks/books/${id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              shelf: shelf
-            })
-          });
+          // ✅ Adding book to a specific shelf
+          if (currentShelf === 'untracked') {
+            // Add book to library with specified shelf
+            const addResponse = await fetch('http://localhost:3000/myBooks/books', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                bookId: id,
+                shelf: shelf
+              })
+            });
 
-          if (!updateResponse.ok) {
-            throw new Error('Failed to update book shelf');
+            if (!addResponse.ok) {
+              throw new Error('Failed to add book to library');
+            }
+          } else {
+            // Update existing book shelf
+            const updateResponse = await fetch(`http://localhost:3000/myBooks/books/${id}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                shelf: shelf
+              })
+            });
+
+            if (!updateResponse.ok) {
+              throw new Error('Failed to update book shelf');
+            }
           }
+          setCurrentShelf(shelf);
         }
-
-        setCurrentShelf(shelf);
 
       } catch (error) {
         console.error('Failed to update shelf:', error);
@@ -290,7 +342,8 @@ import React, { useEffect, useState, useRef } from 'react';
         case 'want-to-read': return 'Want to Read';
         case 'currently-reading': return 'Currently Reading';
         case 'read': return 'Read';
-        default: return 'Want to Read';
+        case 'untracked': return 'Untracked';
+        default: return 'Untracked';
       }
     };
 
@@ -298,7 +351,9 @@ import React, { useEffect, useState, useRef } from 'react';
       switch (shelf) {
         case 'read': return 'shelf-read';
         case 'currently-reading': return 'shelf-reading';
-        default: return 'shelf-want';
+        case 'want-to-read': return 'shelf-want';
+        case 'untracked': return 'shelf-untracked';
+        default: return 'shelf-untracked';
       }
     };
 
@@ -370,6 +425,15 @@ import React, { useEffect, useState, useRef } from 'react';
       }
     };
 
+    // ✅ Add handler for review rating changes
+    const handleReviewRatingChange = async (rating) => {
+      // Update the review rating state
+      setReviewRating(rating);
+      
+      // Also update the main user rating (call the main rating handler)
+      await handleRatingChange(rating);
+    };
+
     return (
       <div className="goodreads-book-page">
         <Navbar 
@@ -418,7 +482,7 @@ import React, { useEffect, useState, useRef } from 'react';
                         onClick={() => setShowShelfDropdown(!showShelfDropdown)}
                         disabled={isUpdatingShelf}
                       >
-                        {isUpdatingShelf ? 'Updating...' : (currentShelf ? getShelfDisplayName(currentShelf) : 'Want to Read')}
+                        {isUpdatingShelf ? 'Updating...' : getShelfDisplayName(currentShelf)}
                         <BiChevronDown className="dropdown-icon" />
                       </button>
 
@@ -432,6 +496,9 @@ import React, { useEffect, useState, useRef } from 'react';
                           </div>
                           <div className="shelf-option-modern" onClick={() => handleShelfChange('read')}>
                             Read
+                          </div>
+                          <div className="shelf-option-modern" onClick={() => handleShelfChange('untracked')}>
+                            Untracked
                           </div>
                         </div>
                       )}
@@ -473,15 +540,30 @@ import React, { useEffect, useState, useRef } from 'react';
                   <span className="detail-val">{formatDate(book.publication_date)}</span>
                 </div>
                 <div className="detail-row">
-  <span className="detail-key">Genres</span>
-  <div className="genre-tags-container">
-    {Array.isArray(book.genres) && book.genres.length > 0
-      ? book.genres.map((g, i) => (
-          <span key={i} className="genre-tag">{g}</span>
-        ))
-      : <span className="genre-tag">Unknown</span>}
-  </div>
-</div>
+                  <span className="detail-key">Genres</span>
+                  <div className="genre-tags-container">
+                    {Array.isArray(book.genre_details) && book.genre_details.length > 0
+                      ? book.genre_details.map((genre, i) => (
+                          <span 
+                            key={i} 
+                            className="genre-tag clickable"
+                            onClick={() => navigate(`/genre/${genre.id}`)}
+                          >
+                            {genre.name}
+                          </span>
+                        ))
+                      : Array.isArray(book.genres) && book.genres.length > 0
+                      ? book.genres.map((genreName, i) => (
+                          <span 
+                            key={i} 
+                            className="genre-tag"
+                          >
+                            {genreName}
+                          </span>
+                        ))
+                      : <span className="genre-tag">Unknown</span>}
+                  </div>
+                </div>
 
                 <div className="detail-row">
                   <span className="detail-key">Language</span>
@@ -669,16 +751,27 @@ import React, { useEffect, useState, useRef } from 'react';
                   />
                 </div>
                 <div className="form-field">
-                  <label className="rating-label">Rating (Required)</label>
+                  <label className="rating-label">
+                    Rating (Required) 
+                    {userRating > 0 && (
+                      <span className="existing-rating-note">
+                        - Current rating: {userRating} star{userRating === 1 ? '' : 's'}
+                      </span>
+                    )}
+                  </label>
                   <div className="rating-input-section">
                     <RatingComponent
                       currentRating={reviewRating}
-                      onRatingChange={setReviewRating}
+                      onRatingChange={handleReviewRatingChange}
                       isInteractive={true}
                       size="medium"
                     />
                     <span className="rating-text">
-                      {reviewRating === 0 ? 'Please select a rating' : `${reviewRating} star${reviewRating === 1 ? '' : 's'}`}
+                      {reviewRating === 0 ? (
+                        <span className="rating-required">Please select a rating to write a review</span>
+                      ) : (
+                        `${reviewRating} star${reviewRating === 1 ? '' : 's'} selected`
+                      )}
                     </span>
                   </div>
                 </div>
@@ -692,8 +785,12 @@ import React, { useEffect, useState, useRef } from 'react';
                     rows="6"
                   />
                 </div>
-                <button type="submit" className="submit-btn-clean">
-                  Post Review
+                <button 
+                  type="submit" 
+                  className={`submit-btn-clean ${reviewRating === 0 ? 'disabled' : ''}`}
+                  disabled={reviewRating === 0}
+                >
+                  {reviewRating === 0 ? 'Rate the book to post review' : 'Post Review'}
                 </button>
               </form>
 

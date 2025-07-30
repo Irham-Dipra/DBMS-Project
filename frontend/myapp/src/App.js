@@ -12,6 +12,7 @@ import AddBook from './pages/AddBook';
 import MyBooks from './pages/MyBooks';
 import ReadingStats from './pages/ReadingStats';
 import Author from './pages/Author';
+import Genre from './pages/Genre';
 import Browse from './pages/Browse';
 import ModeratorDash from './pages/ModeratorDash';
 import Analytics from './components/Analytics';
@@ -34,6 +35,7 @@ function App() {
           <Route path="/my-books" element={<MyBooks />} />
           <Route path="/my-books/stats" element={<ReadingStats />} />
           <Route path="/author/:id" element={<Author />} />
+          <Route path="/genre/:id" element={<Genre />} />
           <Route path="/browse" element={<Browse />} />
           <Route path="/moderator-dashboard" element={<ModeratorDash />} />
           <Route path="/moderator-books" element={<ModeratorBooks />} />

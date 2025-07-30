@@ -90,3 +90,38 @@
   border: 4px solid transparent;
   border-top-color: rgba(0, 0, 0, 0.8);
 }
+
+.existing-rating-note {
+  color: #666;
+  font-weight: normal;
+  font-size: 0.9em;
+  margin-left: 8px;
+}
+
+.rating-required {
+  color: #d73502;
+  font-weight: 500;
+}
+
+.submit-btn-clean.disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.submit-btn-clean.disabled:hover {
+  background-color: #ccc;
+  transform: none;
+}
+
+.shelf-untracked {
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+.shelf-untracked:hover {
+  background-color: #e8e8e8;
+  border-color: #bbb;
+}
