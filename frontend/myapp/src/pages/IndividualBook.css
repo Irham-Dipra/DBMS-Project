@@ -125,11 +125,11 @@
 
 .rating-star {
   font-size: 1.2rem;
-  color: #ffa500;
+  color: #ffa500 !important; /* Keep stars orange for filled */
 }
 
 .rating-star.empty {
-  color: #ddd;
+  color: #4a5568 !important; /* Darker color for empty stars */
 }
 
 .rating-count {
@@ -153,8 +153,9 @@
 
 .rating-label {
   width: 60px;
-  color: #a0aec0;
+  color: #e2e8f0 !important; /* Force brighter color with !important */
   text-align: right;
+  font-weight: 500;
 }
 
 .rating-bar {
@@ -173,8 +174,9 @@
 
 .rating-percent {
   width: 40px;
-  color: #a0aec0;
+  color: #e2e8f0 !important; /* Force brighter color with !important */
   text-align: right;
+  font-weight: 500;
 }
 
 /* User Actions Section */
@@ -313,14 +315,14 @@
 }
 
 .detail-key {
-  color: #666;
+  color: #a0aec0; /* Keep labels readable */
   font-weight: 500;
   min-width: 100px;
   text-align: right;
 }
 
 .detail-val {
-  color: #333;
+  color: #e2e8f0; /* Much brighter for values */
 }
 
 .genre-tag {
@@ -804,11 +806,11 @@
 
 .review-star {
   font-size: 0.9rem;
-  color: #ffa500;
+  color: #ffa500 !important; /* Keep review stars orange for filled */
 }
 
 .review-star.empty {
-  color: #ddd;
+  color: #4a5568 !important; /* Darker color for empty stars */
 }
 
 .review-date {

@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 import BookCard from '../components/BookCard';
+import Navbar from '../components/Navbar';
+import { FilterProvider } from '../contexts/FilterContext';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -165,6 +167,10 @@ const Profile = () => {
     window.location.reload();
   };
 
+  const handleSearch = (searchTerm) => {
+    navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+  };
+
   const getFullName = (user) => {
     if (!user) return '';
     const firstName = user.first_name || '';
@@ -213,220 +219,228 @@ const Profile = () => {
   }
 
   return (
-    <div className="profile-page">
-      {/* Profile Header */}
-      <div className="profile-header-section">
-        <div className="profile-container">
-          <div className="profile-picture-section">
-            <div className="profile-picture">
-              {user.profile_picture_url ? (
-                <img src={user.profile_picture_url} alt="Profile" />
-              ) : (
-                <div className="profile-initials">{getUserInitials(user)}</div>
-              )}
-            </div>
-            <div className="profile-info">
-              <h1 className="profile-name">{getFullName(user)}</h1>
-              <p className="profile-username">@{user.username}</p>
-              {user.is_moderator && (
-                <p className="profile-moderator-badge">Moderator</p>
-              )}
-              {user.bio && <p className="profile-bio">{user.bio}</p>}
-              
-              {/* Deactivation Status */}
-              {!user.is_active && (
-                <div className="deactivation-status">
-                  <div className="deactivation-header">
-                    <span className="deactivation-badge">🚫 Account Deactivated</span>
-                    {user.days_until_reactivation !== null && user.days_until_reactivation > 0 && (
-                      <span className="reactivation-countdown">
-                        Reactivates in {user.days_until_reactivation} days
-                      </span>
+    <FilterProvider>
+      <div className="profile-page">
+        <Navbar 
+          loggedIn={true} 
+          onSearch={handleSearch}
+          showFilters={true}
+        />
+        
+        {/* Profile Header */}
+        <div className="profile-header-section">
+          <div className="profile-container">
+            <div className="profile-picture-section">
+              <div className="profile-picture">
+                {user.profile_picture_url ? (
+                  <img src={user.profile_picture_url} alt="Profile" />
+                ) : (
+                  <div className="profile-initials">{getUserInitials(user)}</div>
+                )}
+              </div>
+              <div className="profile-info">
+                <h1 className="profile-name">{getFullName(user)}</h1>
+                <p className="profile-username">@{user.username}</p>
+                {user.is_moderator && (
+                  <p className="profile-moderator-badge">Moderator</p>
+                )}
+                {user.bio && <p className="profile-bio">{user.bio}</p>}
+                
+                {/* Deactivation Status */}
+                {!user.is_active && (
+                  <div className="deactivation-status">
+                    <div className="deactivation-header">
+                      <span className="deactivation-badge">🚫 Account Deactivated</span>
+                      {user.days_until_reactivation !== null && user.days_until_reactivation > 0 && (
+                        <span className="reactivation-countdown">
+                          Reactivates in {user.days_until_reactivation} days
+                        </span>
+                      )}
+                    </div>
+                    {user.deactivation_reason && (
+                      <div className="deactivation-reason">
+                        <strong>Reason:</strong> {user.deactivation_reason}
+                      </div>
+                    )}
+                    {user.deactivated_at && (
+                      <div className="deactivation-date">
+                        <strong>Deactivated on:</strong> {new Date(user.deactivated_at).toLocaleDateString()}
+                      </div>
                     )}
                   </div>
-                  {user.deactivation_reason && (
-                    <div className="deactivation-reason">
-                      <strong>Reason:</strong> {user.deactivation_reason}
-                    </div>
-                  )}
-                  {user.deactivated_at && (
-                    <div className="deactivation-date">
-                      <strong>Deactivated on:</strong> {new Date(user.deactivated_at).toLocaleDateString()}
-                    </div>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-          <div className="profile-actions">
-            <button className="edit-profile-btn" onClick={handleEditProfile}>
-              ✏️ Edit Profile
-            </button>
-            {user.is_moderator && (
-              <button className="moderator-dashboard-btn" onClick={() => navigate('/moderator-dashboard')}>
-                🔧 Moderator Dashboard
+            <div className="profile-actions">
+              <button className="edit-profile-btn" onClick={handleEditProfile}>
+                ✏️ Edit Profile
               </button>
-            )}
-            <button className="logout-btn" onClick={handleLogout}>
-              🚪 Logout
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="profile-content">
-        {/* Sidebar */}
-        <div className="profile-sidebar">
-          <div className="sidebar-section">
-            <h3>📚 My Library</h3>
-            <ul className="sidebar-menu">
-              <li onClick={() => navigate('/my-books')}>📖 All Books</li>
-              <li onClick={() => navigate('/my-books/stats')}>📊 Reading Stats</li>
-            </ul>
+              {user.is_moderator && (
+                <button className="moderator-dashboard-btn" onClick={() => navigate('/moderator-dashboard')}>
+                  🔧 Moderator Dashboard
+                </button>
+              )}
+              <button className="logout-btn" onClick={handleLogout}>
+                🚪 Logout
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Main Feed */}
-        <div className="profile-main">
-          {/* My Books Section */}
-          <div className="content-section">
-            <div className="section-header">
-              <h2>📚 My Books</h2>
-              <button className="view-all-btn" onClick={() => navigate('/my-books')}>
-                View All
-              </button>
-            </div>
-            <div className="books-grid">
-              {myBooks.length > 0 ? (
-                myBooks.map((book) => (
-                  <BookCard
-                    key={book.id}
-                    id={book.id}
-                    title={book.title}
-                    author={book.author}
-                    averageRating={book.avg_rating}
-                    coverUrl={book.cover_url}
-                    userRating={book.user_rating || 0}
-                    isRead={book.shelf === 'read'}
-                    isInUserLibrary={true}
-                    shelf={book.shelf}
-                    isInWishlist={book.shelf === 'want-to-read'}
-                  />
-                ))
-              ) : (
-                <div className="empty-state">
-                  <p>No books in your library yet. Start building your collection!</p>
-                  <button onClick={() => navigate('/')}>Browse Books</button>
-                </div>
-              )}
+        {/* Main Content Area */}
+        <div className="profile-content">
+          {/* Sidebar */}
+          <div className="profile-sidebar">
+            <div className="sidebar-section">
+              <h3>📚 My Library</h3>
+              <ul className="sidebar-menu">
+                <li onClick={() => navigate('/my-books')}>📖 All Books</li>
+                <li onClick={() => navigate('/my-books/stats')}>📊 Reading Stats</li>
+              </ul>
             </div>
           </div>
 
-          {/* Reviews Section */}
-          <div className="content-section">
-            <div className="section-header">
-              <h2>⭐ My Reviews</h2>
-              <button className="view-all-btn">View All</button>
+          {/* Main Feed */}
+          <div className="profile-main">
+            {/* My Books Section */}
+            <div className="content-section">
+              <div className="section-header">
+                <h2>📚 My Books</h2>
+                <button className="view-all-btn" onClick={() => navigate('/my-books')}>
+                  View All
+                </button>
+              </div>
+              <div className="books-grid">
+                {myBooks.length > 0 ? (
+                  myBooks.map((book) => (
+                    <BookCard
+                      key={book.id}
+                      id={book.id}
+                      title={book.title}
+                      author={book.author}
+                      averageRating={book.avg_rating}
+                      coverUrl={book.cover_url}
+                      userRating={book.user_rating || 0}
+                      isRead={book.shelf === 'read'}
+                      isInUserLibrary={true}
+                      shelf={book.shelf}
+                      isInWishlist={book.shelf === 'want-to-read'}
+                    />
+                  ))
+                ) : (
+                  <div className="empty-state">
+                    <p>No books in your library yet. Start building your collection!</p>
+                    <button onClick={() => navigate('/')}>Browse Books</button>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="reviews-list">
-              {reviews.length > 0 ? (
-                reviews.map((review) => (
-                  <div key={review.id} className="review-card">
-                    <div className="profile-review-header">
-                      <img 
-                        src={review.cover_image || '/default-book-cover.jpg'} 
-                        alt={review.book_title}
-                        className="book-cover-mini"
-                      />
-                      <div className="review-book-info">
-                        <h4 className="review-book-title">{review.book_title}</h4>
-                        <p className="review-book-author">by {review.author_name}</p>
-                        <div className="profile-review-rating">
-                          <div className="profile-review-stars">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <span 
-                                key={star} 
-                                className={`star ${star <= review.rating ? 'filled' : 'empty'}`}
-                              >
-                                ⭐
-                              </span>
-                            ))}
+
+            {/* Reviews Section */}
+            <div className="content-section">
+              <div className="section-header">
+                <h2>⭐ My Reviews</h2>
+                <button className="view-all-btn">View All</button>
+              </div>
+              <div className="reviews-list">
+                {reviews.length > 0 ? (
+                  reviews.map((review) => (
+                    <div key={review.id} className="review-card">
+                      <div className="profile-review-header">
+                        <img 
+                          src={review.cover_image || '/default-book-cover.jpg'} 
+                          alt={review.book_title}
+                          className="book-cover-mini"
+                        />
+                        <div className="review-book-info">
+                          <h4 className="review-book-title">{review.book_title}</h4>
+                          <p className="review-book-author">by {review.author_name}</p>
+                          <div className="profile-review-rating">
+                            <div className="profile-review-stars">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <span 
+                                  key={star} 
+                                  className={`star ${star <= review.rating ? 'filled' : 'empty'}`}
+                                >
+                                  ⭐
+                                </span>
+                              ))}
+                            </div>
+                            <span className="profile-review-value">({review.rating}/5)</span>
                           </div>
-                          <span className="profile-review-value">({review.rating}/5)</span>
+                        </div>
+                        <div className="profile-review-date">
+                          {new Date(review.created_at).toLocaleDateString()}
                         </div>
                       </div>
-                      <div className="profile-review-date">
-                        {new Date(review.created_at).toLocaleDateString()}
+                      <div className="review-content-section">
+                        <h5 className="profile-review-title">{review.review_title}</h5>
+                        <p className="profile-review-body">{review.body}</p>
                       </div>
                     </div>
-                    <div className="review-content-section">
-                      <h5 className="profile-review-title">{review.review_title}</h5>
-                      <p className="profile-review-body">{review.body}</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="empty-state">
+                    <p>No reviews yet. Share your thoughts on books you've read!</p>
                   </div>
-                ))
-              ) : (
-                <div className="empty-state">
-                  <p>No reviews yet. Share your thoughts on books you've read!</p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Edit Profile Modal */}
-      {isEditing && (
-        <div className="modal-overlay" onClick={() => setIsEditing(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Edit Profile</h2>
-            <div className="edit-form">
-              <div className="form-group">
-                <label>First Name</label>
-                <input
-                  type="text"
-                  value={editForm.first_name}
-                  onChange={(e) => setEditForm({...editForm, first_name: e.target.value})}
-                />
-              </div>
-              <div className="form-group">
-                <label>Last Name</label>
-                <input
-                  type="text"
-                  value={editForm.last_name}
-                  onChange={(e) => setEditForm({...editForm, last_name: e.target.value})}
-                />
-              </div>
-              <div className="form-group">
-                <label>Bio</label>
-                <textarea
-                  value={editForm.bio}
-                  onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
-                  rows="4"
-                />
-              </div>
-              <div className="form-group">
-                <label>Profile Picture URL</label>
-                <input
-                  type="url"
-                  value={editForm.profile_picture_url}
-                  onChange={(e) => setEditForm({...editForm, profile_picture_url: e.target.value})}
-                />
-              </div>
-              <div className="modal-actions">
-                <button className="cancel-btn" onClick={() => setIsEditing(false)}>
-                  Cancel
-                </button>
-                <button className="save-btn" onClick={handleSaveProfile}>
-                  Save Changes
-                </button>
+        {/* Edit Profile Modal */}
+        {isEditing && (
+          <div className="modal-overlay" onClick={() => setIsEditing(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2>Edit Profile</h2>
+              <div className="edit-form">
+                <div className="form-group">
+                  <label>First Name</label>
+                  <input
+                    type="text"
+                    value={editForm.first_name}
+                    onChange={(e) => setEditForm({...editForm, first_name: e.target.value})}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Last Name</label>
+                  <input
+                    type="text"
+                    value={editForm.last_name}
+                    onChange={(e) => setEditForm({...editForm, last_name: e.target.value})}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Bio</label>
+                  <textarea
+                    value={editForm.bio}
+                    onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
+                    rows="4"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Profile Picture URL</label>
+                  <input
+                    type="url"
+                    value={editForm.profile_picture_url}
+                    onChange={(e) => setEditForm({...editForm, profile_picture_url: e.target.value})}
+                  />
+                </div>
+                <div className="modal-actions">
+                  <button className="cancel-btn" onClick={() => setIsEditing(false)}>
+                    Cancel
+                  </button>
+                  <button className="save-btn" onClick={handleSaveProfile}>
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </FilterProvider>
   );
 };
 

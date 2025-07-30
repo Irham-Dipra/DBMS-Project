@@ -162,37 +162,50 @@ router.get('/', async (req, res) => {
             FROM genres g
             JOIN book_genres bg ON g.id = bg.genre_id
             WHERE bg.book_id = b.id
-          ) as genres
+          ) as genres,
+          POSITION(LOWER($2) IN LOWER(b.title)) as match_position
         FROM books b
           JOIN book_authors ba ON b.id = ba.book_id
           JOIN authors a ON ba.author_id = a.id
         WHERE LOWER(b.title) LIKE $1
-        ORDER BY b.average_rating DESC, b.title ASC
+        ORDER BY 
+          CASE WHEN POSITION(LOWER($2) IN LOWER(b.title)) = 1 THEN 0 ELSE 1 END,
+          POSITION(LOWER($2) IN LOWER(b.title)),
+          b.average_rating DESC, 
+          b.title ASC
         LIMIT 20;
       `;
-      const booksResult = await pool.query(bookQuery, [keyword]);
+      const booksResult = await pool.query(bookQuery, [keyword, q.trim().toLowerCase()]);
       if (booksResult.rows.length > 0) data.books = booksResult.rows;
 
       // Search Authors
       const authorQuery = `
-        SELECT id, name, bio, author_image
+        SELECT id, name, bio, author_image,
+               POSITION(LOWER($2) IN LOWER(name)) as match_position
         FROM authors
         WHERE LOWER(name) LIKE $1
-        ORDER BY name
+        ORDER BY 
+          CASE WHEN POSITION(LOWER($2) IN LOWER(name)) = 1 THEN 0 ELSE 1 END,
+          POSITION(LOWER($2) IN LOWER(name)),
+          name ASC
         LIMIT 20;
       `;
-      const authorsResult = await pool.query(authorQuery, [keyword]);
+      const authorsResult = await pool.query(authorQuery, [keyword, q.trim().toLowerCase()]);
       if (authorsResult.rows.length > 0) data.authors = authorsResult.rows;
 
       // Search Characters - FIXED: table name
       const characterQuery = `
-        SELECT id, name, biography as description
+        SELECT id, name, biography as description,
+               POSITION(LOWER($2) IN LOWER(name)) as match_position
         FROM characters
         WHERE LOWER(name) LIKE $1
-        ORDER BY name
+        ORDER BY 
+          CASE WHEN POSITION(LOWER($2) IN LOWER(name)) = 1 THEN 0 ELSE 1 END,
+          POSITION(LOWER($2) IN LOWER(name)),
+          name ASC
         LIMIT 20;
       `;
-      const charactersResult = await pool.query(characterQuery, [keyword]);
+      const charactersResult = await pool.query(characterQuery, [keyword, q.trim().toLowerCase()]);
       if (charactersResult.rows.length > 0) data.characters = charactersResult.rows;
 
       // Track text search

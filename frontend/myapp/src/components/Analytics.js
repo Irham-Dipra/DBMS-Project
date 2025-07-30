@@ -7,6 +7,8 @@ import {
 } from 'recharts';
 import UserAnalytics from './UserAnalytics';
 import UserProfileModal from './UserProfileModal';
+import Navbar from './Navbar';
+import { FilterProvider } from '../contexts/FilterContext';
 import './Analytics.css';
 
 const Analytics = () => {
@@ -410,209 +412,221 @@ const Analytics = () => {
     setSelectedUserId(null);
   };
 
-  return (
-    <div className="analytics-dashboard">
-      <div className="analytics-header">
-        <button className="back-btn" onClick={handleBack}>← Back to Dashboard</button>
-        <h1>📊 Book Rating & Comparison Analytics</h1>
-      </div>
+  const handleSearch = (searchTerm) => {
+    navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+  };
 
-      <div className="analytics-controls">
-        <div className="tab-buttons">
-          {['genre', 'author', 'publisher', 'content-gaps', 'user-activity', 'user-engagement'].map(tab => (
-            <button
-              key={tab}
-              className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab === 'user-activity' ? '⏰ User Activity' : 
-               tab === 'user-engagement' ? '🏆 User Engagement' :
-               tab === 'content-gaps' ? '🔍 Content Gaps' :
-               `${tab.charAt(0).toUpperCase() + tab.slice(1)} Analysis`}
-            </button>
-          ))}
+  return (
+    <FilterProvider>
+      <div className="analytics-dashboard">
+        <Navbar 
+          loggedIn={true} 
+          onSearch={handleSearch}
+          showFilters={true}
+        />
+        
+        <div className="analytics-header">
+          <button className="back-btn" onClick={handleBack}>← Back to Dashboard</button>
+          <h1>Book Rating & Comparison Analytics</h1>
         </div>
 
-        {!['user-activity', 'user-engagement', 'content-gaps'].includes(activeTab) && (
-          <div className="filter-controls">
-            <div className="date-filter">
-              <label>Start Date:</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            </div>
-            <div className="date-filter">
-              <label>End Date:</label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-            </div>
+        <div className="analytics-controls">
+          <div className="tab-buttons">
+            {['genre', 'author', 'publisher', 'content-gaps', 'user-activity', 'user-engagement'].map(tab => (
+              <button
+                key={tab}
+                className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab === 'user-activity' ? 'User Activity' : 
+                 tab === 'user-engagement' ? 'User Engagement' :
+                 tab === 'content-gaps' ? 'Content Gaps' :
+                 `${tab.charAt(0).toUpperCase() + tab.slice(1)} Analysis`}
+              </button>
+            ))}
+          </div>
 
-            {['genre', 'author', 'publisher'].includes(activeTab) && (
-              <>
-                <div className="item-selector">
-                  <label>Display Type:</label>
-                  <select value={displayType} onChange={(e) => setDisplayType(e.target.value)}>
-                    <option value="top-rated">🏆 Top Rated</option>
-                    <option value="lowest-rated">🔻 Lowest Rated</option>
-                    <option value="most-books">📚 Most Books</option>
-                    <option value="least-books">📖 Least Books</option>
-                    {activeTab === 'genre' && <option value="most-engaging">👍 Most Engaging</option>}
-                  </select>
-                </div>
-                
+          {!['user-activity', 'user-engagement', 'content-gaps'].includes(activeTab) && (
+            <div className="filter-controls">
+              <div className="date-filter">
+                <label>Start Date:</label>
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              </div>
+              <div className="date-filter">
+                <label>End Date:</label>
+                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              </div>
+
+              {['genre', 'author', 'publisher'].includes(activeTab) && (
+                <>
+                  <div className="item-selector">
+                    <label>Display Type:</label>
+                    <select value={displayType} onChange={(e) => setDisplayType(e.target.value)}>
+                      <option value="top-rated">Top Rated</option>
+                      <option value="lowest-rated">Lowest Rated</option>
+                      <option value="most-books">Most Books</option>
+                      <option value="least-books">Least Books</option>
+                      {activeTab === 'genre' && <option value="most-engaging">Most Engaging</option>}
+                    </select>
+                  </div>
+                  
+                  <div className="item-selector">
+                    <label>Show:</label>
+                    <select value={limit} onChange={(e) => setLimit(e.target.value)}>
+                      <option value="5">5 Items</option>
+                      <option value="10">10 Items</option>
+                      <option value="15">15 Items</option>
+                      <option value="20">20 Items</option>
+                      <option value="all">All Items</option>
+                    </select>
+                  </div>
+                  
+                  <div className="item-selector">
+                    <label>Min Books:</label>
+                    <input 
+                      type="number" 
+                      value={minBooks} 
+                      onChange={(e) => setMinBooks(e.target.value)}
+                      placeholder="e.g., 5"
+                      min="0"
+                    />
+                  </div>
+                  
+                  <div className="item-selector">
+                    <label>Min Rating:</label>
+                    <input 
+                      type="number" 
+                      step="0.1"
+                      value={minRating} 
+                      onChange={(e) => setMinRating(e.target.value)}
+                      placeholder="e.g., 3.0"
+                      min="0"
+                      max="5"
+                    />
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'content-gaps' && (
                 <div className="item-selector">
                   <label>Show:</label>
                   <select value={limit} onChange={(e) => setLimit(e.target.value)}>
-                    <option value="5">5 Items</option>
                     <option value="10">10 Items</option>
-                    <option value="15">15 Items</option>
                     <option value="20">20 Items</option>
+                    <option value="50">50 Items</option>
+                    <option value="100">100 Items</option>
                     <option value="all">All Items</option>
                   </select>
                 </div>
-                
+              )}
+
+              {!['genre', 'author', 'publisher'].includes(activeTab) && (
                 <div className="item-selector">
-                  <label>Min Books:</label>
-                  <input 
-                    type="number" 
-                    value={minBooks} 
-                    onChange={(e) => setMinBooks(e.target.value)}
-                    placeholder="e.g., 5"
-                    min="0"
-                  />
+                  <label>Select {activeTab}:</label>
+                  <select value={selectedItem} onChange={(e) => setSelectedItem(e.target.value)}>
+                    <option value="">All {activeTab}s</option>
+                    {getDropdownOptions().map((item, i) => (
+                      <option key={i} value={getDropdownValue(item)}>{getDropdownDisplayName(item)}</option>
+                    ))}
+                  </select>
                 </div>
-                
-                <div className="item-selector">
-                  <label>Min Rating:</label>
-                  <input 
-                    type="number" 
-                    step="0.1"
-                    value={minRating} 
-                    onChange={(e) => setMinRating(e.target.value)}
-                    placeholder="e.g., 3.0"
-                    min="0"
-                    max="5"
-                  />
+              )}
+
+              {activeTab !== 'book' && (
+                <div className="chart-type-selector">
+                  <label>Chart Type:</label>
+                  <select value={chartType} onChange={(e) => setChartType(e.target.value)}>
+                    <option value="bar">Bar</option>
+                    <option value="line">Line</option>
+                    <option value="pie">Pie</option>
+                  </select>
                 </div>
-              </>
-            )}
-
-            {activeTab === 'content-gaps' && (
-              <div className="item-selector">
-                <label>Show:</label>
-                <select value={limit} onChange={(e) => setLimit(e.target.value)}>
-                  <option value="10">10 Items</option>
-                  <option value="20">20 Items</option>
-                  <option value="50">50 Items</option>
-                  <option value="100">100 Items</option>
-                  <option value="all">All Items</option>
-                </select>
-              </div>
-            )}
-
-            {!['genre', 'author', 'publisher'].includes(activeTab) && (
-              <div className="item-selector">
-                <label>Select {activeTab}:</label>
-                <select value={selectedItem} onChange={(e) => setSelectedItem(e.target.value)}>
-                  <option value="">All {activeTab}s</option>
-                  {getDropdownOptions().map((item, i) => (
-                    <option key={i} value={getDropdownValue(item)}>{getDropdownDisplayName(item)}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {activeTab !== 'book' && (
-              <div className="chart-type-selector">
-                <label>Chart Type:</label>
-                <select value={chartType} onChange={(e) => setChartType(e.target.value)}>
-                  <option value="bar">Bar</option>
-                  <option value="line">Line</option>
-                  <option value="pie">Pie</option>
-                </select>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {['user-activity', 'user-engagement'].includes(activeTab) ? (
-        <UserAnalytics 
-          activeTab={activeTab}
-          onUserClick={handleUserClick}
-        />
-      ) : (
-        <div className="analytics-content">
-          <div className="chart-container">
-            <h2>{getTabTitle()}</h2>
-            {renderChart()}
-          </div>
-
-          <div className="analytics-summary">
-            <h3>Summary Statistics</h3>
-            <div className="summary-grid">
-              {['Total Items', 'Highest Rating', 'Lowest Rating', 'Average Rating'].map((label, i) => (
-                <div className="summary-card" key={i}>
-                  <h4>{label}</h4>
-                  <p>
-                    {i === 0
-                      ? stats.total
-                      : stats[[null, 'highest', 'lowest', 'average'][i]].toFixed(1)}
-                  </p>
-                </div>
-              ))}
+              )}
             </div>
-          </div>
+          )}
+        </div>
 
-          <div className="detailed-table">
-            <h3>Detailed Data</h3>
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Avg Rating</th>
-                    <th>Books</th>
-                    <th>Ratings</th>
-                    {['genre', 'author', 'publisher'].includes(activeTab) && (
-                      <>
-                        <th>Reviews</th>
-                        <th>Comments</th>
-                        <th>👍 Upvotes</th>
-                        <th>👎 Downvotes</th>
-                      </>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {getCurrentData().map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.name || item.month}</td>
-                      <td>{(item.avgRating || item.rating || 0).toFixed(1)}</td>
-                      <td>{item.totalBooks || item.reviews || '-'}</td>
-                      <td>{item.totalRatings || '-'}</td>
+        {['user-activity', 'user-engagement'].includes(activeTab) ? (
+          <UserAnalytics 
+            activeTab={activeTab}
+            onUserClick={handleUserClick}
+          />
+        ) : (
+          <div className="analytics-content">
+            <div className="chart-container">
+              <h2>{getTabTitle()}</h2>
+              {renderChart()}
+            </div>
+
+            <div className="analytics-summary">
+              <h3>Summary Statistics</h3>
+              <div className="summary-grid">
+                {['Total Items', 'Highest Rating', 'Lowest Rating', 'Average Rating'].map((label, i) => (
+                  <div className="summary-card" key={i}>
+                    <h4>{label}</h4>
+                    <p>
+                      {i === 0
+                        ? stats.total
+                        : stats[[null, 'highest', 'lowest', 'average'][i]].toFixed(1)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="detailed-table">
+              <h3>Detailed Data</h3>
+              <div className="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Avg Rating</th>
+                      <th>Books</th>
+                      <th>Ratings</th>
                       {['genre', 'author', 'publisher'].includes(activeTab) && (
                         <>
-                          <td>{item.reviewCount || 0}</td>
-                          <td>{item.commentCount || 0}</td>
-                          <td className="upvotes">{item.upvotes || 0}</td>
-                          <td className="downvotes">{item.downvotes || 0}</td>
+                          <th>Reviews</th>
+                          <th>Comments</th>
+                          <th>Upvotes</th>
+                          <th>Downvotes</th>
                         </>
                       )}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {getCurrentData().map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.name || item.month}</td>
+                        <td>{(item.avgRating || item.rating || 0).toFixed(1)}</td>
+                        <td>{item.totalBooks || item.reviews || '-'}</td>
+                        <td>{item.totalRatings || '-'}</td>
+                        {['genre', 'author', 'publisher'].includes(activeTab) && (
+                          <>
+                            <td>{item.reviewCount || 0}</td>
+                            <td>{item.commentCount || 0}</td>
+                            <td className="upvotes">{item.upvotes || 0}</td>
+                            <td className="downvotes">{item.downvotes || 0}</td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* User Profile Modal */}
-      {showUserModal && selectedUserId && (
-        <UserProfileModal 
-          userId={selectedUserId}
-          onClose={handleCloseUserModal}
-        />
-      )}
-    </div>
+        {/* User Profile Modal */}
+        {showUserModal && selectedUserId && (
+          <UserProfileModal 
+            userId={selectedUserId}
+            onClose={handleCloseUserModal}
+          />
+        )}
+      </div>
+    </FilterProvider>
   );
 };
 

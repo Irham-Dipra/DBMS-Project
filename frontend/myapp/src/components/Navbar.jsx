@@ -8,7 +8,7 @@ import { FiFilter } from 'react-icons/fi';
 import FilterBar from './FilterBar';
 import { useFilter } from '../contexts/FilterContext';
 
-function Navbar({ loggedIn, onSearch, showFilters = true }) {
+function Navbar({ loggedIn, onSearch, showFilters = true, showRealTimeSearch = false, onRealTimeSearch }) {
   const navigate = useNavigate();
   const { filters, setFilters, isFilterOpen, setIsFilterOpen, hasActiveFilters, toggleFilter } = useFilter();
 
@@ -35,7 +35,11 @@ function Navbar({ loggedIn, onSearch, showFilters = true }) {
 
         <div className="navbar-right">
           <div className="search-bar-wrapper">
-            <SearchBar onSearch={onSearch || defaultSearchHandler} />
+            <SearchBar 
+              onSearch={showRealTimeSearch ? onRealTimeSearch : (onSearch || defaultSearchHandler)}
+              showRealTimeResults={showRealTimeSearch}
+              placeholder="Search books, authors, characters..."
+            />
           </div>
           {showFilters && (
             <button 

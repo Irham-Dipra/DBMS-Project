@@ -4,6 +4,7 @@
   background: #0f1419;
   color: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding-top: 0; /* Remove any existing padding-top */
 }
 
 /* Profile Header Section */
@@ -11,6 +12,10 @@
   background: #1a1f24;
   border-bottom: 1px solid #2d3748;
   padding: 30px 20px;
+  /* Add top margin to account for potential filter bar */
+  margin-top: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .profile-container {

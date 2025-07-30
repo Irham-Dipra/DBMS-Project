@@ -14,6 +14,7 @@ function SearchResults() {
   const [loading, setLoading] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [error, setError] = useState(null);
+  const [currentSearchTerm, setCurrentSearchTerm] = useState('');
 
   // Memoize the search parameters to prevent unnecessary re-renders
   const searchParams = useMemo(() => {
@@ -153,15 +154,146 @@ function SearchResults() {
     }
   }, [navigate]);
 
+  const handleRealTimeSearch = useCallback((searchTerm) => {
+    if (!searchTerm || searchTerm.trim().length === 0) {
+      setSections([]);
+      setCurrentSearchTerm('');
+      return;
+    }
+
+    setCurrentSearchTerm(searchTerm);
+    
+    // Update URL without causing a full page reload
+    const newSearchParams = new URLSearchParams();
+    newSearchParams.set('q', searchTerm.trim());
+    
+    // Use replace to avoid adding to browser history on every keystroke
+    window.history.replaceState(
+      {},
+      '',
+      `${window.location.pathname}?${newSearchParams.toString()}`
+    );
+
+    // Trigger search
+    performSearch(searchTerm.trim());
+  }, []);
+
+  const performSearch = useCallback(async (searchTerm) => {
+    if (!searchTerm || searchTerm.trim().length === 0) {
+      setSections([]);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const apiSearchParams = new URLSearchParams();
+      apiSearchParams.append('q', searchTerm);
+
+      const response = await fetch(`http://localhost:3000/search?${apiSearchParams.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        const newSections = [];
+
+        if (data.data.books && data.data.books.length > 0) {
+          newSections.push({ 
+            title: `Books matching "${searchTerm}"`, 
+            books: data.data.books,
+            type: 'books'
+          });
+        }
+
+        if (data.data.authors && data.data.authors.length > 0) {
+          const authorItems = data.data.authors.map(author => ({
+            id: `author-${author.id}`,
+            title: author.name,
+            description: author.bio || 'No biography available',
+            author_image: author.author_image || null,
+            type: 'author'
+          }));
+          newSections.push({ 
+            title: `Authors matching "${searchTerm}"`, 
+            items: authorItems,
+            type: 'authors'
+          });
+        }
+
+        if (data.data.characters && data.data.characters.length > 0) {
+          const characterItems = data.data.characters.map(char => ({
+            id: `character-${char.id}`,
+            title: char.name,
+            description: char.description || 'No description available',
+            type: 'character'
+          }));
+          newSections.push({ 
+            title: `Characters matching "${searchTerm}"`, 
+            items: characterItems,
+            type: 'characters'
+          });
+        }
+
+        setSections(newSections);
+      } else {
+        setSections([]);
+        if (!data.success) {
+          setError(data.message || 'Search failed');
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching search results:', err);
+      setError('Failed to fetch search results. Please try again.');
+      setSections([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Focus search input when page loads without query
+  useEffect(() => {
+    if (!searchParams.hasValidQuery && !currentSearchTerm) {
+      // Small delay to ensure components are mounted
+      const timer = setTimeout(() => {
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }, 200);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams.hasValidQuery, currentSearchTerm]);
 
   const getPageTitle = () => {
     if (searchParams.isFiltered) {
       return 'Filtered Search Results';
-    } else if (searchParams.textQuery) {
-      return `Search Results for "${searchParams.textQuery}"`;
+    } else if (currentSearchTerm || searchParams.textQuery) {
+      return `Search Results for "${currentSearchTerm || searchParams.textQuery}"`;
     } else {
-      return 'Search Results';
+      return 'Search';
     }
+  };
+
+  const getWelcomeMessage = () => {
+    if (!currentSearchTerm && !searchParams.hasValidQuery) {
+      return (
+        <div className="search-welcome">
+          <h3 style={{ color: 'white', textAlign: 'center', marginTop: '2rem' }}>
+            Start typing to search for books, authors, or characters
+          </h3>
+          <p style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', marginTop: '1rem' }}>
+            You can also use the filter button to search by specific criteria
+          </p>
+        </div>
+      );
+    }
+    return null;
   };
 
   const getActiveFiltersDisplay = () => {
@@ -214,6 +346,8 @@ function SearchResults() {
       <Navbar 
         loggedIn={loggedIn} 
         onSearch={handleSearch}
+        showRealTimeSearch={true}
+        onRealTimeSearch={handleRealTimeSearch}
       />
 
       <div className="search-results-header">
@@ -230,9 +364,11 @@ function SearchResults() {
         </div>
       )}
 
-      {loading && <p style={{ color: 'white' }}>Loading...</p>}
+      {loading && <p style={{ color: 'white', textAlign: 'center' }}>Searching...</p>}
 
-      {!loading && !error && sections.length === 0 && searchParams.hasValidQuery && (
+      {getWelcomeMessage()}
+
+      {!loading && !error && sections.length === 0 && (currentSearchTerm || searchParams.hasValidQuery) && (
         <div className="no-results">
           <p style={{ color: 'white' }}>
             {searchParams.isFiltered 

@@ -61,7 +61,7 @@
 
 .results-list {
   display: flex;
-  gap: 20px;
+  gap: 1.4rem; /* Match Homescroll gap */
   overflow-x: auto;
   scroll-behavior: smooth;
   padding: 10px 0;
@@ -77,32 +77,120 @@
 
 .results-list > div {
   flex: 0 0 auto;
-  opacity: 0;
-  transform: translateY(30px);
-  animation: fadeInUp 0.8s ease-out forwards;
-  animation-delay: var(--delay, 0s);
+  /* Remove animation properties for instant updates */
 }
 
 /* Force horizontal layout for author cards */
 .authors-list > div {
   flex: 0 0 auto !important;
   display: inline-block !important;
-  width: 300px !important;
+  width: 160px !important; /* Increase width to match bigger avatars */
   vertical-align: top !important;
 }
 
-@keyframes fadeInUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Character cards same width as author cards */
+.characters-list > div {
+  flex: 0 0 auto !important;
+  display: inline-block !important;
+  width: 160px !important; /* Increase width to match bigger avatars */
+  vertical-align: top !important;
 }
 
-/* Different gap for authors and characters */
+/* Author profile style */
+.author-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0.5rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.author-profile:hover {
+  transform: scale(1.05);
+}
+
+.author-avatar {
+  width: 180px; /* Increased from 120px to 180px */
+  height: 180px; /* Increased from 120px to 180px */
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2c5364, #203a43, #0f2027);
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 0.3rem; /* Reduced from 1rem to 0.3rem */
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid rgba(255, 255, 255, 0.2); /* Thicker border */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); /* Bigger shadow */
+}
+
+.author-name-profile {
+  font-size: 0.9rem; /* Slightly bigger text */
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Character profile style */
+.character-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0.5rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.character-profile:hover {
+  transform: scale(1.05);
+}
+
+.character-avatar {
+  width: 180px; /* Increased from 120px to 180px */
+  height: 180px; /* Increased from 120px to 180px */
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7209b7, #4cc9f0, #2c5364);
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 0.3rem; /* Reduced from 1rem to 0.3rem */
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid rgba(255, 255, 255, 0.2); /* Thicker border */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); /* Bigger shadow */
+  font-size: 2.5rem; /* Slightly bigger icon */
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.character-name-profile {
+  font-size: 0.9rem; /* Slightly bigger text */
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Different gap for authors and characters - Match Homescroll */
 .authors-list, .characters-list {
   display: flex !important;
   flex-direction: row !important;
-  gap: 16px;
+  gap: 4rem; /* Increased from 1.2rem to 2rem */
   overflow-x: auto;
   scroll-behavior: smooth;
 }
@@ -114,10 +202,11 @@
   flex-wrap: nowrap !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
+  gap: 4rem; /* Increased from 1.2rem to 2rem */
 }
 
 .books-list {
-  gap: 20px;
+  gap: 1.4rem; /* Match Homescroll gap */
 }
 
 /* Responsive Design */
@@ -143,14 +232,27 @@
   }
   
   .results-list {
-    gap: 16px;
+    gap: 1.2rem; /* Slightly smaller gap for mobile */
+  }
+  
+  .authors-list > div,
+  .characters-list > div {
+    width: 140px !important; /* Adjusted for mobile */
+  }
+  
+  .author-avatar,
+  .character-avatar {
+    width: 100px; /* Bigger than before but scaled for mobile */
+    height: 100px;
+  }
+  
+  .author-name-profile,
+  .character-name-profile {
+    font-size: 0.8rem;
   }
   
   .authors-list, .characters-list {
-    display: flex;
-    flex-direction: row;
-    gap: 12px;
-    overflow-x: auto;
+    gap: 1.5rem; /* Increased from 1rem to 1.5rem */
   }
 }
 
@@ -176,13 +278,26 @@
   }
   
   .results-list {
-    gap: 14px;
+    gap: 1rem; /* Even smaller gap for small screens */
+  }
+  
+  .authors-list > div,
+  .characters-list > div {
+    width: 120px !important;
+  }
+  
+  .author-avatar,
+  .character-avatar {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .author-name-profile,
+  .character-name-profile {
+    font-size: 0.75rem;
   }
   
   .authors-list, .characters-list {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    overflow-x: auto;
+    gap: 1.2rem; /* Increased from 0.8rem to 1.2rem */
   }
 }

@@ -413,7 +413,7 @@ function MyBooks() {
             {books.length === 0 ? (
               <div className="no-books-message">
                 <p>No books found in your library.</p>
-                <button onClick={() => navigate('/browse')}>Browse Books</button>
+                <button onClick={() => navigate('/')}>Browse Books</button>
               </div>
             ) : (
               <div className="books-table-container">

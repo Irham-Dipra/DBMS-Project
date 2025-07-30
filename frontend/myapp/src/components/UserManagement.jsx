@@ -1,9 +1,13 @@
 // src/components/UserManagement.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaSearch, FaUser, FaBan, FaCheck, FaCalendarAlt, FaEdit } from 'react-icons/fa';
 import './UserManagement.css';
+import Navbar from './Navbar';
+import { FilterProvider } from '../contexts/FilterContext';
 
 const UserManagement = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [summary, setSummary] = useState({});
@@ -158,6 +162,10 @@ const UserManagement = () => {
     return diffDays > 0 ? diffDays : 0;
   };
 
+  const handleSearch = (searchTerm) => {
+    navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+  };
+
   if (loading) {
     return (
       <div className="user-management-container">
@@ -167,238 +175,246 @@ const UserManagement = () => {
   }
 
   return (
-    <div className="user-management-container">
-      <div className="user-management-header">
-        <h2>👥 User Management</h2>
-        <p>Manage user accounts, search users, and control activation status</p>
-      </div>
+    <FilterProvider>
+      <div className="user-management-container">
+        <Navbar 
+          loggedIn={true} 
+          onSearch={handleSearch}
+          showFilters={true}
+        />
+        
+        <div className="user-management-header">
+          <h2>User Management</h2>
+          <p>Manage user accounts, search users, and control activation status</p>
+        </div>
 
-      {/* Summary Statistics */}
-      <div className="user-summary-grid">
-        <div className="summary-stat">
-          <div className="stat-icon">👥</div>
-          <div className="stat-info">
-            <div className="stat-value">{summary.total_users || 0}</div>
-            <div className="stat-label">Total Users</div>
+        {/* Summary Statistics */}
+        <div className="user-summary-grid">
+          <div className="summary-stat">
+            <div className="stat-icon">👥</div>
+            <div className="stat-info">
+              <div className="stat-value">{summary.total_users || 0}</div>
+              <div className="stat-label">Total Users</div>
+            </div>
+          </div>
+          <div className="summary-stat active">
+            <div className="stat-icon">●</div>
+            <div className="stat-info">
+              <div className="stat-value">{summary.active_users || 0}</div>
+              <div className="stat-label">Active Users</div>
+            </div>
+          </div>
+          <div className="summary-stat inactive">
+            <div className="stat-icon">●</div>
+            <div className="stat-info">
+              <div className="stat-value">{summary.inactive_users || 0}</div>
+              <div className="stat-label">Deactivated Users</div>
+            </div>
+          </div>
+          <div className="summary-stat new">
+            <div className="stat-icon">●</div>
+            <div className="stat-info">
+              <div className="stat-value">{summary.new_users_week || 0}</div>
+              <div className="stat-label">New This Week</div>
+            </div>
           </div>
         </div>
-        <div className="summary-stat active">
-          <div className="stat-icon">🟢</div>
-          <div className="stat-info">
-            <div className="stat-value">{summary.active_users || 0}</div>
-            <div className="stat-label">Active Users</div>
-          </div>
-        </div>
-        <div className="summary-stat inactive">
-          <div className="stat-icon">🔴</div>
-          <div className="stat-info">
-            <div className="stat-value">{summary.inactive_users || 0}</div>
-            <div className="stat-label">Deactivated Users</div>
-          </div>
-        </div>
-        <div className="summary-stat new">
-          <div className="stat-icon">🆕</div>
-          <div className="stat-info">
-            <div className="stat-value">{summary.new_users_week || 0}</div>
-            <div className="stat-label">New This Week</div>
-          </div>
-        </div>
-      </div>
 
-      {/* Search Controls */}
-      <div className="search-controls">
-        <div className="search-input-group">
-          <FaSearch className="search-icon" />
-          <input
-            type="text"
-            placeholder={`Search by ${searchType}...`}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
+        {/* Search Controls */}
+        <div className="search-controls">
+          <div className="search-input-group">
+            <FaSearch className="search-icon" />
+            <input
+              type="text"
+              placeholder={`Search by ${searchType}...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+          </div>
+          <select
+            value={searchType}
+            onChange={(e) => setSearchType(e.target.value)}
+            className="search-type-select"
+          >
+            <option value="username">Username</option>
+            <option value="email">Email</option>
+            <option value="user_id">User ID</option>
+            <option value="name">Full Name</option>
+          </select>
+          <button onClick={fetchUserData} className="refresh-btn" disabled={loading}>
+            Refresh
+          </button>
         </div>
-        <select
-          value={searchType}
-          onChange={(e) => setSearchType(e.target.value)}
-          className="search-type-select"
-        >
-          <option value="username">Username</option>
-          <option value="email">Email</option>
-          <option value="user_id">User ID</option>
-          <option value="name">Full Name</option>
-        </select>
-        <button onClick={fetchUserData} className="refresh-btn" disabled={loading}>
-          🔄 Refresh
-        </button>
-      </div>
 
-      {/* User List */}
-      <div className="user-list-container">
-        <div className="user-list-header">
-          <h3>User Details ({filteredUsers.length} users)</h3>
-        </div>
-        <div className="user-list">
-          {filteredUsers.map(user => {
-            const daysUntilReactivation = getDaysUntilReactivation(user);
-            
-            return (
-              <div 
-                key={user.id} 
-                className={`user-item ${user.active_status ? 'active' : 'deactivated'}`}
-              >
-                <div className="user-avatar">
-                  <FaUser />
-                </div>
-                
-                <div className="user-details">
-                  <div className="user-main-info">
-                    <div className="user-name">
-                      {user.first_name && user.last_name 
-                        ? `${user.first_name} ${user.last_name}` 
-                        : user.username}
-                    </div>
-                    <div className="user-id">ID: {user.id}</div>
+        {/* User List */}
+        <div className="user-list-container">
+          <div className="user-list-header">
+            <h3>User Details ({filteredUsers.length} users)</h3>
+          </div>
+          <div className="user-list">
+            {filteredUsers.map(user => {
+              const daysUntilReactivation = getDaysUntilReactivation(user);
+              
+              return (
+                <div 
+                  key={user.id} 
+                  className={`user-item ${user.active_status ? 'active' : 'deactivated'}`}
+                >
+                  <div className="user-avatar">
+                    <FaUser />
                   </div>
-                  <div className="user-email">{user.email}</div>
-                  <div className="user-meta">
-                    <span className="joined">Joined: {formatDate(user.created_at)}</span>
-                    {user.last_login && (
-                      <span className="last-login">
-                        Last login: {formatDate(user.last_login)}
-                      </span>
+                  
+                  <div className="user-details">
+                    <div className="user-main-info">
+                      <div className="user-name">
+                        {user.first_name && user.last_name 
+                          ? `${user.first_name} ${user.last_name}` 
+                          : user.username}
+                      </div>
+                      <div className="user-id">ID: {user.id}</div>
+                    </div>
+                    <div className="user-email">{user.email}</div>
+                    <div className="user-meta">
+                      <span className="joined">Joined: {formatDate(user.created_at)}</span>
+                      {user.last_login && (
+                        <span className="last-login">
+                          Last login: {formatDate(user.last_login)}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {!user.active_status && (
+                      <div className="deactivation-info">
+                        <div className="deactivation-reason">
+                          <strong>Reason:</strong> {user.deactivation_reason || 'No reason provided'}
+                        </div>
+                        {user.deactivated_at && (
+                          <div className="deactivation-date">
+                            <strong>Deactivated:</strong> {formatDate(user.deactivated_at)}
+                          </div>
+                        )}
+                        {daysUntilReactivation !== null && (
+                          <div className="auto-reactivation">
+                            <FaCalendarAlt />
+                            {daysUntilReactivation > 0 
+                              ? `Auto-reactivate in ${daysUntilReactivation} days`
+                              : 'Scheduled for auto-reactivation'
+                            }
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                   
-                  {!user.active_status && (
-                    <div className="deactivation-info">
-                      <div className="deactivation-reason">
-                        <strong>Reason:</strong> {user.deactivation_reason || 'No reason provided'}
-                      </div>
-                      {user.deactivated_at && (
-                        <div className="deactivation-date">
-                          <strong>Deactivated:</strong> {formatDate(user.deactivated_at)}
-                        </div>
-                      )}
-                      {daysUntilReactivation !== null && (
-                        <div className="auto-reactivation">
-                          <FaCalendarAlt />
-                          {daysUntilReactivation > 0 
-                            ? `Auto-reactivate in ${daysUntilReactivation} days`
-                            : 'Scheduled for auto-reactivation'
-                          }
-                        </div>
+                  <div className="user-status-actions">
+                    <span className={`status-badge ${user.active_status ? 'active' : 'deactivated'}`}>
+                      {user.active_status ? 'Active' : 'Deactivated'}
+                    </span>
+                    <div className="user-actions">
+                      {user.active_status ? (
+                        <button
+                          onClick={() => handleUserAction(user, 'deactivate')}
+                          className="action-btn deactivate-btn"
+                          title="Deactivate User"
+                        >
+                          <FaBan /> Deactivate
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleUserAction(user, 'reactivate')}
+                          className="action-btn reactivate-btn"
+                          title="Reactivate User"
+                        >
+                          <FaCheck /> Reactivate
+                        </button>
                       )}
                     </div>
-                  )}
-                </div>
-                
-                <div className="user-status-actions">
-                  <span className={`status-badge ${user.active_status ? 'active' : 'deactivated'}`}>
-                    {user.active_status ? 'Active' : 'Deactivated'}
-                  </span>
-                  <div className="user-actions">
-                    {user.active_status ? (
-                      <button
-                        onClick={() => handleUserAction(user, 'deactivate')}
-                        className="action-btn deactivate-btn"
-                        title="Deactivate User"
-                      >
-                        <FaBan /> Deactivate
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleUserAction(user, 'reactivate')}
-                        className="action-btn reactivate-btn"
-                        title="Reactivate User"
-                      >
-                        <FaCheck /> Reactivate
-                      </button>
-                    )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          {filteredUsers.length === 0 && (
+            <div className="no-users-found">
+              <FaUser size={48} />
+              <h3>No users found</h3>
+              <p>Try adjusting your search criteria</p>
+            </div>
+          )}
         </div>
 
-        {filteredUsers.length === 0 && (
-          <div className="no-users-found">
-            <FaUser size={48} />
-            <h3>No users found</h3>
-            <p>Try adjusting your search criteria</p>
+        {/* Action Modal */}
+        {showActionModal && selectedUser && (
+          <div className="modal-overlay">
+            <div className="action-modal">
+              <div className="modal-header">
+                <h3>
+                  {actionType === 'deactivate' ? 'Deactivate User' : 'Reactivate User'}
+                </h3>
+                <button onClick={closeModal} className="close-btn">×</button>
+              </div>
+              
+              <div className="modal-content">
+                <div className="user-info">
+                  <strong>User:</strong> {selectedUser.username} ({selectedUser.email})
+                </div>
+                
+                {actionType === 'deactivate' && (
+                  <>
+                    <div className="form-group">
+                      <label htmlFor="reason">Reason for deactivation *</label>
+                      <textarea
+                        id="reason"
+                        value={deactivationReason}
+                        onChange={(e) => setDeactivationReason(e.target.value)}
+                        placeholder="Enter the reason for deactivating this user..."
+                        rows={4}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label htmlFor="duration">Duration (days)</label>
+                      <input
+                        type="number"
+                        id="duration"
+                        value={deactivationDuration}
+                        onChange={(e) => setDeactivationDuration(e.target.value)}
+                        placeholder="Leave empty for permanent deactivation"
+                        min="1"
+                        max="365"
+                      />
+                      <small>If specified, the user will be automatically reactivated after this many days</small>
+                    </div>
+                  </>
+                )}
+                
+                {actionType === 'reactivate' && (
+                  <div className="reactivate-info">
+                    <p>This will immediately reactivate the user and restore all their access privileges.</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="modal-actions">
+                <button onClick={closeModal} className="cancel-btn" disabled={actionLoading}>
+                  Cancel
+                </button>
+                <button
+                  onClick={executeUserAction}
+                  className={`confirm-btn ${actionType}-btn`}
+                  disabled={actionLoading || (actionType === 'deactivate' && !deactivationReason.trim())}
+                >
+                  {actionLoading ? 'Processing...' : `${actionType === 'deactivate' ? 'Deactivate' : 'Reactivate'} User`}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Action Modal */}
-      {showActionModal && selectedUser && (
-        <div className="modal-overlay">
-          <div className="action-modal">
-            <div className="modal-header">
-              <h3>
-                {actionType === 'deactivate' ? '🚫 Deactivate User' : '✅ Reactivate User'}
-              </h3>
-              <button onClick={closeModal} className="close-btn">×</button>
-            </div>
-            
-            <div className="modal-content">
-              <div className="user-info">
-                <strong>User:</strong> {selectedUser.username} ({selectedUser.email})
-              </div>
-              
-              {actionType === 'deactivate' && (
-                <>
-                  <div className="form-group">
-                    <label htmlFor="reason">Reason for deactivation *</label>
-                    <textarea
-                      id="reason"
-                      value={deactivationReason}
-                      onChange={(e) => setDeactivationReason(e.target.value)}
-                      placeholder="Enter the reason for deactivating this user..."
-                      rows={4}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="duration">Duration (days)</label>
-                    <input
-                      type="number"
-                      id="duration"
-                      value={deactivationDuration}
-                      onChange={(e) => setDeactivationDuration(e.target.value)}
-                      placeholder="Leave empty for permanent deactivation"
-                      min="1"
-                      max="365"
-                    />
-                    <small>If specified, the user will be automatically reactivated after this many days</small>
-                  </div>
-                </>
-              )}
-              
-              {actionType === 'reactivate' && (
-                <div className="reactivate-info">
-                  <p>This will immediately reactivate the user and restore all their access privileges.</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="modal-actions">
-              <button onClick={closeModal} className="cancel-btn" disabled={actionLoading}>
-                Cancel
-              </button>
-              <button
-                onClick={executeUserAction}
-                className={`confirm-btn ${actionType}-btn`}
-                disabled={actionLoading || (actionType === 'deactivate' && !deactivationReason.trim())}
-              >
-                {actionLoading ? 'Processing...' : `${actionType === 'deactivate' ? 'Deactivate' : 'Reactivate'} User`}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </FilterProvider>
   );
 };
 
